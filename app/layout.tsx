@@ -43,7 +43,7 @@ export const metadata: Metadata = {
     type: "website",
     locale: "es_AR",
     images: [
-      { url: "/images/desktop/common/logo-nav.svg" },
+      { url: "/images/desktop/common/logo.png" },
     ],
   },
   twitter: {
@@ -52,7 +52,7 @@ export const metadata: Metadata = {
     description:
       "Ortodoncia Digital precisa y clínica. Alineadores invisibles con soporte experto y tecnología de punta.",
     images: [
-      "/images/desktop/common/logo-nav.svg",
+      { url: "/images/desktop/common/logo.png" },
     ],
   },
   robots: {
@@ -60,9 +60,9 @@ export const metadata: Metadata = {
     follow: true,
   },
   icons: {
-    icon: "/images/desktop/common/logo-nav.svg",
-    shortcut: "/images/desktop/common/logo-nav.svg",
-    apple: "/images/desktop/common/logo-nav.svg",
+    icon: "/images/desktop/common/logo.png",
+    shortcut: "/images/desktop/common/logo.png",
+    apple: "/images/desktop/common/logo.png",
   },
   alternates: {
     canonical: "/",
