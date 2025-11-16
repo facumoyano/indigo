@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Capa_2" data-name="Capa 2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 225.95 55">
+  <defs>
+    <style>
+      .cls-1 {
+        letter-spacing: 0em;
+      }
+
+      .cls-1, .cls-2, .cls-3, .cls-4, .cls-5, .cls-6, .cls-7, .cls-8, .cls-9, .cls-10 {
+        font-family: TTNorms-Bold, 'TT Norms';
+        font-weight: 700;
+      }
+
+      .cls-11 {
+        letter-spacing: 0em;
+      }
+
+      .cls-11, .cls-12, .cls-13, .cls-14, .cls-15 {
+        font-family: TTNorms-Regular, 'TT Norms';
+      }
+
+      .cls-2 {
+        letter-spacing: -.01em;
+      }
+
+      .cls-3 {
+        letter-spacing: 0em;
+      }
+
+      .cls-13 {
+        letter-spacing: -.01em;
+      }
+
+      .cls-14 {
+        letter-spacing: -.02em;
+      }
+
+      .cls-16 {
+        fill: #606eb2;
+        font-size: 23.11px;
+      }
+
+      .cls-17 {
+        fill: #fff;
+        opacity: .52;
+      }
+
+      .cls-5 {
+        letter-spacing: -.01em;
+      }
+
+      .cls-6 {
+        letter-spacing: 0em;
+      }
+
+      .cls-15 {
+        letter-spacing: 0em;
+      }
+
+      .cls-7 {
+        letter-spacing: 0em;
+      }
+
+      .cls-8 {
+        letter-spacing: 0em;
+      }
+
+      .cls-9 {
+        letter-spacing: 0em;
+      }
+
+      .cls-10 {
+        letter-spacing: 0em;
+      }
+    </style>
+  </defs>
+  <g id="Diseño">
+    <g>
+      <rect class="cls-17" y="0" width="225.95" height="55" rx="17.52" ry="17.52"/>
+      <text class="cls-16" transform="translate(13.28 34.43)"><tspan class="cls-7" x="0" y="0">C</tspan><tspan class="cls-3" x="17.38" y="0">o</tspan><tspan class="cls-2" x="30.97" y="0">n</tspan><tspan class="cls-5" x="44.39" y="0">t</tspan><tspan class="cls-8" x="53.5" y="0">a</tspan><tspan class="cls-6" x="65.7" y="0">c</tspan><tspan class="cls-5" x="77.99" y="0">t</tspan><tspan class="cls-9" x="87.1" y="0">a</tspan><tspan class="cls-1" x="99.38" y="0">n</tspan><tspan class="cls-10" x="113" y="0">o</tspan><tspan class="cls-4" x="126.41" y="0">s</tspan><tspan class="cls-12" x="136.92" y="0"> </tspan><tspan class="cls-14" x="141.3" y="0">a</tspan><tspan class="cls-13" x="152.95" y="0">h</tspan><tspan class="cls-15" x="166.21" y="0">o</tspan><tspan class="cls-11" x="179.43" y="0">r</tspan><tspan class="cls-12" x="187.38" y="0">a</tspan></text>
+    </g>
+  </g>
+</svg>
