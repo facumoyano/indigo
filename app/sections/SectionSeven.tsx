@@ -1,10 +1,11 @@
 import React from 'react'
 import { Images } from '../images'
 import Image from 'next/image'
+import { WHATSAPP_LINK } from '../constants'
 
 const SectionSeven = () => {
     return (
-        <div className='relative w-full px-6 mt-6 md:hidden'>
+        <div className='relative w-full px-6 mt-6 md:hidden' id="iniciar">
             <div
                 className="h-[200px]  bg-contain bg-no-repeat bg-center flex justify-center items-end text-center mx-auto"
                 style={{
@@ -27,14 +28,14 @@ const SectionSeven = () => {
                 </div>
             </div>
             <div className="mt-4 flex justify-center">
-                <button className="cursor-pointer">
+                <a href={WHATSAPP_LINK} target="_blank" rel="noopener noreferrer" className="cursor-pointer">
                     <Image
                         src={Images.mobile.common.btnEmpeza}
                         alt="Empezar"
                         width={180}
                         height={40}
                     />
-                </button>
+                </a>
             </div>
         </div>
     )

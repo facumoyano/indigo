@@ -1,5 +1,6 @@
 import Image from "next/image"
 import { Images } from "../images"
+import { WHATSAPP_LINK } from "../constants"
 
 const Hero = () => {
     return (
@@ -54,15 +55,15 @@ const Hero = () => {
             <div>
                 <span className="text-xs text-blue-custom text-center"><span className="font-bold">Indigo&reg;</span> alineadores invisibles.</span>
             </div>
-            <button className="cursor-pointer">
+            <a href={WHATSAPP_LINK} target="_blank" rel="noopener noreferrer" className="cursor-pointer">
                 <Image
                     src={Images.desktop.common.btnContactanos}
-                    alt="Logo"
+                    alt="Contactanos"
                     width={200}
                     height={30}
                     className="h-9"
                 />
-            </button>
+            </a>
         </div>
     )
 }

@@ -5,6 +5,7 @@ import Image from 'next/image'
 const SectionFourDesktop = () => {
     return (
         <div
+            id="sumate"
             className="hidden md:block relative w-screen aspect-[1920/900] min-h-[90vh] bg-no-repeat bg-cover bg-center"
             style={{ backgroundImage: `url(${Images.desktop.sectionFour.bgGradient})` }}
         >

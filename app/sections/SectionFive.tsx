@@ -2,6 +2,7 @@
 
 import Image from 'next/image'
 import { Images } from '../images'
+import { WHATSAPP_LINK } from '../constants'
 
 const SectionFive = () => {
     return (
@@ -17,7 +18,7 @@ const SectionFive = () => {
                 <p className="text-xl font-normal">Especialistas y expertas <br></br> en Ortodoncia Digital.</p>
             </div>
             <div className="absolute inset-0 z-10 flex justify-center items-end p-6 ">
-                <button className="cursor-pointer">
+                <a href={WHATSAPP_LINK} target="_blank" rel="noopener noreferrer" className="cursor-pointer">
                     <Image
                         src={Images.desktop.common.btnContactanosGradient}
                         alt="Contactanos"
@@ -25,7 +26,7 @@ const SectionFive = () => {
                         height={20}
                         className="object-cover"
                     />
-                </button>
+                </a>
             </div>
         </div>
     )

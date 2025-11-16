@@ -5,7 +5,7 @@ import { Images } from '../images'
 const SectionFour = () => {
     // TODO: Cambiar imagen de cartuchera por agrupada
     return (
-        <div className='md:hidden'>
+        <div className='md:hidden' id="sumate">
             <div
                 className="w-full min-h-[80vh] bg-cover bg-no-repeat relative [background-position:center_40%] pb-10"
                 style={{

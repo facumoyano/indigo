@@ -2,7 +2,7 @@ import React from 'react'
 
 const SectionContactDesktop = () => {
   return (
-    <div className='hidden md:block my-14'>
+    <div id='contacto' className='hidden md:block my-14'>
         <div className='container mx-auto px-8 flex w-full'>
             <div className='text-blue-text text-lg w-full leading-6'>
                 <p className='font-bold'>Indigo&reg;</p>
@@ -10,13 +10,13 @@ const SectionContactDesktop = () => {
                 <p>Invisibles</p>
             </div>
             <div className='w-full text-lg'>
-                <p className='font-bold text-blue-text'>Alineadores</p>
+                <a href='#alineadores' className='font-bold text-blue-text'>Alineadores</a>
                 <ul className='text-gray-text font-semibold'>
-                    <li>Hacemos</li>
-                    <li>Sumate</li>
-                    <li>Nosotras</li>
-                    <li>Iniciar</li>
-                    <li>Contacto</li>
+                    <li><a href="#hacemos">Hacemos</a></li>
+                    <li><a href="#sumate">Sumate</a></li>
+                    <li><a href="#nosotras">Nosotras</a></li>
+                    <li><a href="#iniciar">Iniciar</a></li>
+                    <li><a href="#contacto">Contacto</a></li>
                 </ul>
             </div>
             <div className='w-full text-lg'>

@@ -2,6 +2,7 @@ import NavbarDesktop from '@/components/navbar-desktop'
 import Image from 'next/image'
 import React from 'react'
 import { Images } from '../images'
+import { WHATSAPP_LINK } from '../constants'
 
 
 const HeroDesktop = () => {
@@ -49,7 +50,7 @@ const HeroDesktop = () => {
                         />
                         {/* TODO: Cambiar btn por imagen aca y en mobile */}
                         <div className='flex items-end h-full justify-end pb-16'>
-                            <button>
+                            <a href={WHATSAPP_LINK} target="_blank" rel="noopener noreferrer" className='cursor-pointer'>
                                 <Image
                                     src={Images.desktop.common.btnContactanos}
                                     alt="Contactanos"
@@ -57,7 +58,7 @@ const HeroDesktop = () => {
                                     height={50}
                                     className="object-cover"
                                 />
-                            </button>
+                            </a>
                         </div>
                     </div>
                 </div>

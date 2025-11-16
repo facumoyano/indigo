@@ -4,7 +4,7 @@ import { Images } from '../images'
 
 const SectionSixDesktop = () => {
     return (
-        <div className='hidden md:block relative'>
+        <div id='nosotras' className='hidden md:block relative'>
             <div className='grid grid-cols-4 pb-10'>
                 <div>
                     <div className='relative h-[600px] w-full'>

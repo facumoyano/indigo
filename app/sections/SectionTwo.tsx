@@ -1,10 +1,11 @@
 import Image from "next/image"
 import { Images } from "../images"
+import { WHATSAPP_LINK } from "../constants"
 
 const SectionTwo = () => {
     return (
         // TODO: Revisar estilos CAMBIAR COLOR BG, CAMBIAR LOS DIENTES POR FOTO CON TEXTO
-        <div className="min-h-screen relative bg-[#606eb2] px-4 md:hidden pb-6 z-40">
+        <div id="alineadores" className="min-h-screen relative bg-[#606eb2] px-4 md:hidden pb-6 z-40">
             <div className="w-full flex flex-col justify-center">
                 <div className="relative h-[125px] w-[270px] mx-auto flex items-center justify-center text-center">
                     <div
@@ -40,14 +41,14 @@ const SectionTwo = () => {
                         <span className="font-bold">transformá tu consultorio con</span><br />
                         <span className="font-bold">Ortodoncia Digital ahora.</span>
                     </p>
-                    <button className="cursor-pointer pt-4">
+                    <a href={WHATSAPP_LINK} target="_blank" rel="noopener noreferrer" className="cursor-pointer pt-4 z-50">
                         <Image
                             src={Images.mobile.common.btnContactanosGradient}
                             alt="Contactanos"
                             width={127}
                             height={20}
                         />
-                    </button>
+                    </a>
                     <Image
                         src={Images.mobile.sectionTwo.go}
                         alt="Go"

@@ -4,7 +4,7 @@ import Image from 'next/image'
 
 const SectionContact = () => {
     return (
-        <div className='mt-12 md:hidden pb-4'>
+        <div className='mt-12 md:hidden pb-4' id="contacto">
             <div
                 className="h-[700px] bg-contain bg-no-repeat bg-center relative w-full"
                 style={{
@@ -33,12 +33,12 @@ const SectionContact = () => {
                 <div className='mt-4 flex'>
                     <ul className='w-full'>
                         <li className='flex flex-col gap-1'>
-                            <a href="" className='text-gray-text text-xs'>Alineadores</a>
-                            <a href="" className='text-gray-text text-xs'>Hacemos</a>
-                            <a href="" className='text-gray-text text-xs'>Sumate</a>
-                            <a href="" className='text-gray-text text-xs'>Nosotras</a>
-                            <a href="" className='text-gray-text text-xs'>Iniciar</a>
-                            <a href="" className='text-gray-text text-xs'>Contacto</a>
+                            <a href="#alineadores" className='text-gray-text text-xs'>Alineadores</a>
+                            <a href="#hacemos" className='text-gray-text text-xs'>Hacemos</a>
+                            <a href="#sumate" className='text-gray-text text-xs'>Sumate</a>
+                            <a href="#nosotras" className='text-gray-text text-xs'>Nosotras</a>
+                            <a href="#iniciar" className='text-gray-text text-xs'>Iniciar</a>
+                            <a href="#contacto" className='text-gray-text text-xs'>Contacto</a>
                         </li>
                     </ul>
                     <div className='flex flex-col w-full'>

@@ -5,7 +5,7 @@ import CardInsignia from '../components/section-three/card-insignia'
 
 const SectionThree = () => {
     return (
-        <div className=" relative px-4 md:hidden">
+        <div className=" relative px-4 md:hidden" id="hacemos">
             <Image
                 src={Images.mobile.sectionThree.circleGreen}
                 alt="Circle"

@@ -11,7 +11,7 @@ import { Images } from '../images'
 
 const SectionSix = () => {
     return (
-        <div className='relative md:hidden'>
+        <div className='relative md:hidden' id="nosotras">
             <Carousel className="w-full relative">
                 <CarouselContent>
                     <CarouselItem>
