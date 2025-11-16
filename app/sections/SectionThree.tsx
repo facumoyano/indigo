@@ -9,7 +9,7 @@ const SectionThree = () => {
             <Image
                 src={Images.mobile.sectionThree.circleGreen}
                 alt="Circle"
-                width={220}
+                width={200}
                 height={140}
                 className="absolute -top-4 -right-1/6 z-10"
             />

@@ -26,7 +26,7 @@ export default function Home() {
         <Image
           src={Images.mobile.hero.ball}
           alt="Ball"
-          width={156}
+          width={136}
           height={126}
           className="
             absolute right-0 top-0 translate-x-1/3 -translate-y-1/2
@@ -50,7 +50,7 @@ export default function Home() {
         <Image
           src={Images.mobile.hero.ball}
           alt="Ball"
-          width={156}
+          width={136}
           height={126}
           className="
             absolute -left-8 -bottom-4

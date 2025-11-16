@@ -6,7 +6,7 @@ const Hero = () => {
     return (
         // TODO: Revisar estilos
         <div
-            className="flex flex-col items-center overflow-x-hidden pt-10 justify-center min-h-screen w-full bg-cover px-4 space-y-8 relative z-10 bg-[url('/images/mobile/hero/bg-hero.png')] md:hidden"
+            className="flex flex-col items-center overflow-x-hidden pt-10 justify-center min-h-screen w-full bg-cover px-4 space-y-8 relative z-10 bg-[url('/images/mobile/hero/bg-hero.png')] md:hidden pb-6"
 
         >
             <span className="text-xs text-light-blue-text text-center pt-10">
