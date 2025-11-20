@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local"
 import "./globals.css";
+import { Toaster } from "@/components/ui/sonner";
 
 export const myFont = localFont({
   src: [
@@ -80,6 +81,7 @@ export default function RootLayout({
         className={`${myFont.className} overflow-x-hidden`}
       >
         {children}
+        <Toaster />
       </body>
     </html>
   );
