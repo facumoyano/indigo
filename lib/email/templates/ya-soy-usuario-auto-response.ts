@@ -1,6 +1,6 @@
 import { escapeHtml } from '@/lib/utils'
 
-const LOGO_URL = 'https://indigo-dun-nine.vercel.app/images/desktop/common/logo.png'
+const LOGO_URL = 'https://sonrisasindigo.com.ar/images/desktop/common/logo.png'
 
 const getShortName = (fullName: string) => {
   const trimmed = fullName?.trim()

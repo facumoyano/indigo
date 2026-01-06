@@ -1,4 +1,7 @@
 import React from 'react'
+import Link from 'next/link'
+
+import { NAV_LINKS } from '@/components/nav-links'
 
 const SectionContactDesktop = () => {
   return (
@@ -10,14 +13,13 @@ const SectionContactDesktop = () => {
                 <p>Invisibles</p>
             </div>
             <div className='w-full text-lg'>
-                <a href='#alineadores' className='font-bold text-blue-text'>Alineadores</a>
-                <ul className='text-gray-text font-semibold'>
-                    <li><a href="#hacemos">Hacemos</a></li>
-                    <li><a href="#sumate">Sumate</a></li>
-                    <li><a href="#nosotras">Nosotras</a></li>
-                    <li><a href="#iniciar">Iniciar</a></li>
-                    <li><a href="#contacto">Contacto</a></li>
-                </ul>
+                <nav className='text-gray-text font-semibold flex flex-col gap-2 mt-2'>
+                    {NAV_LINKS.map((link) => (
+                        <Link key={link.href} href={link.href}>
+                            {link.label}
+                        </Link>
+                    ))}
+                </nav>
             </div>
             <div className='w-full text-lg'>
                 <p className='text-gray-text leading-6 font-semibold'>Transformá tu consultorio <br /><span className='font-semibold'>con Ortodoncia Digital</span></p>

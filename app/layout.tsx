@@ -61,9 +61,9 @@ export const metadata: Metadata = {
     follow: true,
   },
   icons: {
-    icon: "/images/desktop/common/logo.png",
-    shortcut: "/images/desktop/common/logo.png",
-    apple: "/images/desktop/common/logo.png",
+    icon: "/icon.png",
+    shortcut: "/icon.png",
+    apple: "/icon.png",
   },
   alternates: {
     canonical: "/",

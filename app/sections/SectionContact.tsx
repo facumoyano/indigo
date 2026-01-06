@@ -1,6 +1,9 @@
 import React from 'react'
 import { Images } from '../images'
 import Image from 'next/image'
+import Link from 'next/link'
+
+import { NAV_LINKS } from '@/components/nav-links'
 
 const SectionContact = () => {
     return (
@@ -31,16 +34,13 @@ const SectionContact = () => {
                     Invisibles
                 </p>
                 <div className='mt-4 flex'>
-                    <ul className='w-full'>
-                        <li className='flex flex-col gap-1'>
-                            <a href="#alineadores" className='text-gray-text text-xs'>Alineadores</a>
-                            <a href="#hacemos" className='text-gray-text text-xs'>Hacemos</a>
-                            <a href="#sumate" className='text-gray-text text-xs'>Sumate</a>
-                            <a href="#nosotras" className='text-gray-text text-xs'>Nosotras</a>
-                            <a href="#iniciar" className='text-gray-text text-xs'>Iniciar</a>
-                            <a href="#contacto" className='text-gray-text text-xs'>Contacto</a>
-                        </li>
-                    </ul>
+                    <nav className='w-full flex flex-col gap-1'>
+                        {NAV_LINKS.map((link) => (
+                            <Link key={link.href} href={link.href} className='text-gray-text text-xs'>
+                                {link.label}
+                            </Link>
+                        ))}
+                    </nav>
                     <div className='flex flex-col w-full'>
                         <p className='text-[10px] text-gray-text'>Transformá tu consultorio con Ortodoncia Digital</p>
                         <ul className='mt-4'>

@@ -12,7 +12,7 @@ const ContactPage = () => {
         <div>
             <NavbarDesktop />
             <NavbarMobile />
-            <div className='max-w-[600px] mx-auto mt-10 md:mt-20 p-4'>
+            <div className='max-w-[600px] mx-auto mt-20 md:mt-20 p-4'>
                 <h1 className='text-2xl md:text-3xl text-blue-custom'>Primer contacto con <span className='font-bold'>Indigo&reg;</span><br />Solicitud de información personal</h1>
                 <div className='h-[1px] bg-blue-custom w-full my-4'></div>
                 <div className='text-gray-text text-base md:text-xl space-y-6'>
