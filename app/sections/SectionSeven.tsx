@@ -2,6 +2,7 @@ import React from 'react'
 import { Images } from '../images'
 import Image from 'next/image'
 import { WHATSAPP_LINK } from '../constants'
+import Link from 'next/link'
 
 const SectionSeven = () => {
     return (
@@ -28,14 +29,14 @@ const SectionSeven = () => {
                 </div>
             </div>
             <div className="mt-4 flex justify-center">
-                <a href={WHATSAPP_LINK} target="_blank" rel="noopener noreferrer" className="cursor-pointer">
+                <Link href="/contactar" className="cursor-pointer">
                     <Image
                         src={Images.mobile.common.btnEmpeza}
                         alt="Empezar"
                         width={180}
                         height={40}
                     />
-                </a>
+                </Link>
             </div>
         </div>
     )

@@ -12,7 +12,7 @@ const SectionFourDesktop = () => {
             <div className='container mx-auto px-8 pt-34'>
                 <div className='flex gap-8 items-center justify-center'>
                     <div className='w-[35%]'>
-                        <p className='text-blue-text text-3xl'>Cada inicio de tratamiento, <br /><span className='font-bold'>incluye un set de presentación con la identidad oficial de Índigo&reg;.</span></p>
+                        <p className='text-blue-text text-3xl'>Cada inicio de tratamiento, <br /><span className='font-bold'>incluye un set de presentación con la identidad oficial de Indigo&reg;.</span></p>
                     </div>
                     <div className='w-[40%]'>
                         <Image
@@ -24,7 +24,7 @@ const SectionFourDesktop = () => {
                         />
                     </div>
                     <div className='text-blue-text text-lg w-[25%] leading-6'>
-                        <p className='font-bold'>Set iniciación Índigo&reg;</p>
+                        <p className='font-bold'>Set iniciación Indigo&reg;</p>
                         <p>- Estuche.</p>
                         <p>- Porta alineadores.</p>
                         <p>- Accesorios extras.</p>

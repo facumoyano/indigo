@@ -61,6 +61,7 @@ export const Images = {
             btnEmpeza: "/images/desktop/common/btn-empeza-gradient.svg",
             logoNav: "/images/desktop/common/logo-nav.svg",
             btnContactanos: "/images/desktop/common/btn-contactanos.svg",
+            btnEnviar: "/images/desktop/common/btn-enviar.svg",
         },
         hero: {
             bgGradient: "/images/desktop/hero/bg-hero.png",

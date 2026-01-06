@@ -4,10 +4,10 @@ import { Images } from '../images'
 
 const SectionSixDesktop = () => {
     return (
-        <div id='nosotras' className='hidden md:block relative'>
+        <div className='hidden md:block relative'>
             <div className='grid grid-cols-4 pb-10'>
                 <div>
-                    <div className='relative h-[600px] w-full'>
+                    <div className='relative h-[460px] w-full'>
                         <Image
                             src={Images.desktop.sectionSix.viviPolimanti}
                             alt="Vivi Polimanti"
@@ -15,7 +15,7 @@ const SectionSixDesktop = () => {
                             className="object-cover object-center"
                         />
                         <div className='absolute inset-0 z-10 flex flex-col text-center items-center p-6 '>
-                            <p className='text-blue-text text-md'>Especialista <span className='font-bold'>Índigo&reg;</span></p>
+                            <p className='text-blue-text text-md'>Especialista <span className='font-bold'>Indigo&reg;</span></p>
                             <p className='text-xl text-white'>Dra. Viviana Polimanti</p>
                         </div>
                     </div>
@@ -27,7 +27,7 @@ const SectionSixDesktop = () => {
                     </div>
                 </div>
                 <div>
-                    <div className='relative h-[600px] w-full'>
+                    <div className='relative h-[460px] w-full'>
                         <Image
                             src={Images.desktop.sectionSix.paulinaDiaz}
                             alt="Paulina Diaz"
@@ -35,7 +35,7 @@ const SectionSixDesktop = () => {
                             className="object-cover object-center"
                         />
                         <div className='absolute inset-0 z-10 flex flex-col text-center items-center p-6 '>
-                            <p className='text-blue-text text-md'>Especialista <span className='font-bold'>Índigo&reg;</span></p>
+                            <p className='text-blue-text text-md'>Especialista <span className='font-bold'>Indigo&reg;</span></p>
                             <p className='text-xl text-white'>Dra. Paulina Díaz</p>
                         </div>
                     </div>
@@ -48,7 +48,7 @@ const SectionSixDesktop = () => {
                     </div>
                 </div>
                 <div>
-                    <div className='relative h-[600px] w-full'>
+                    <div className='relative h-[460px] w-full'>
                         <Image
                             src={Images.desktop.sectionSix.ayeOlivera}
                             alt="Aye Olivera"
@@ -56,7 +56,7 @@ const SectionSixDesktop = () => {
                             className="object-cover object-center"
                         />
                         <div className='absolute inset-0 z-10 flex flex-col text-center items-center p-6 '>
-                            <p className='text-blue-text text-dm'>Especialista <span className='font-bold'>Índigo&reg;</span></p>
+                            <p className='text-blue-text text-dm'>Especialista <span className='font-bold'>Indigo&reg;</span></p>
                             <p className='text-xl text-white'>Dra. Ayelén Olivera</p>
                         </div>
                     </div>
@@ -67,7 +67,7 @@ const SectionSixDesktop = () => {
                     </div>
                 </div>
                 <div>
-                    <div className='relative h-[600px] w-full'>
+                    <div className='relative h-[460px] w-full'>
                         <Image
                             src={Images.desktop.sectionSix.cataRey}
                             alt="Catalina Fey"
@@ -75,7 +75,7 @@ const SectionSixDesktop = () => {
                             className="object-cover object-center"
                         />
                         <div className='absolute inset-0 z-10 flex flex-col text-center items-center p-6 '>
-                            <p className='text-blue-text text-md'>Especialista <span className='font-bold'>Índigo&reg;</span></p>
+                            <p className='text-blue-text text-md'>Especialista <span className='font-bold'>Indigo&reg;</span></p>
                             <p className='text-xl text-white'>Dra. Catalina Fey</p>
                         </div>
                     </div>

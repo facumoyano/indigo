@@ -12,7 +12,7 @@ const SectionFour = () => {
                     backgroundImage: `url(${Images.mobile.sectionFour.bgGradient})`,
                 }}
             >
-                <p className='text-blue-text text-xl mt-8 px-12'>Cada inicio de tratamiento, <br /><span className='font-bold'>incluye un set de presentación con la identidad oficial de Índigo&reg;.</span></p>
+                <p className='text-blue-text text-xl mt-8 px-12'>Cada inicio de tratamiento, <br /><span className='font-bold'>incluye un set de presentación con la identidad oficial de Indigo&reg;.</span></p>
                 <div className='-mt-15'>
                     <div className='relative flex items-center justify-center'>
                         <Image
@@ -25,7 +25,7 @@ const SectionFour = () => {
                     </div>
                     <div className='mx-12 -mt-4'>
                         <div>
-                            <p className='font-bold text-sm text-white'>Set iniciación Índigo&reg;</p>
+                            <p className='font-bold text-sm text-white'>Set iniciación Indigo&reg;</p>
                             <p className='text-sm text-white'>- Estuche. Porta alineadores. Accesorios extras.</p>
                         </div>
                         <div className='mt-4'>

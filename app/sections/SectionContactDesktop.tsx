@@ -22,7 +22,6 @@ const SectionContactDesktop = () => {
             <div className='w-full text-lg'>
                 <p className='text-gray-text leading-6 font-semibold'>Transformá tu consultorio <br /><span className='font-semibold'>con Ortodoncia Digital</span></p>
                 <ul className='text-blue-text my-6'>
-                    <li><span className='font-semibold'>Whtsp:</span> +54 9 358 XXX XXXX</li>
                     <li><span className='font-semibold'>Correo:</span> sonrisasindigo@gmail.com</li>
                     <li><span className='font-semibold'>Ig:</span> @sonrisasindigo</li>
                     <li><span className='font-semibold'>Cursos:</span> /migrandoal3d.ar</li>

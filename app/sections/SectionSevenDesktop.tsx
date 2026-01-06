@@ -2,6 +2,7 @@ import React from 'react'
 import { Images } from '../images'
 import Image from 'next/image'
 import { WHATSAPP_LINK } from '../constants'
+import Link from 'next/link'
 
 const SectionSevenDesktop = () => {
   return (
@@ -11,14 +12,14 @@ const SectionSevenDesktop = () => {
                 <p className='text-gray-text fonnt-bold text-2xl'>Supervisamos.<br />Acompañamos. Resolvemos.</p>
                 <p className='text-blue-text text-2xl'>No necesitás grandes <br /> inversiones o infraestructura.</p>
                 <p className='text-blue-text font-bold text-2xl'>Trabajar con alineadores y <br /> un equipo de especialistas <br /> que domine la Ortodoncia <br /> Digital es posible.</p>
-                <a href={WHATSAPP_LINK} target="_blank" rel="noopener noreferrer" className='cursor-pointer'>
+                <Link  href="/contactar" className='cursor-pointer'>
                     <Image
                         src={Images.desktop.common.btnEmpeza}
                         alt="Empezar"
                         width={180}
                         height={40}
                     />
-                </a>
+                </Link>
             </div>
     </div>
   )

@@ -11,21 +11,21 @@ import { Images } from '../images'
 
 const SectionSix = () => {
     return (
-        <div className='relative md:hidden' id="nosotras">
+        <div className='relative md:hidden'>
             <Carousel className="w-full relative">
                 <CarouselContent>
                     <CarouselItem>
                         <div>
                             <div className='h-[470px] relative'>
                                 <Image
-                                    src={Images.mobile.sectionSix.viviPolimanti}
+                                    src={Images.desktop.sectionSix.viviPolimanti}
                                     alt="Vivi Polimanti"
                                     fill
                                     className="object-cover object-center"
                                     priority
                                 />
                                 <div className='absolute inset-0 z-10 flex flex-col text-center items-center p-6 '>
-                                    <p className='text-blue-text text-sm'>Especialista <span className='font-bold'>Índigo&reg;</span></p>
+                                    <p className='text-blue-text text-sm'>Especialista <span className='font-bold'>Indigo&reg;</span></p>
                                     <p className='text-xl text-white'>Dra. Viviana Polimanti</p>
                                 </div>
                             </div>
@@ -53,14 +53,14 @@ const SectionSix = () => {
                         <div>
                             <div className='h-[470px] relative'>
                                 <Image
-                                    src={Images.mobile.sectionSix.paulinaDiaz}
+                                    src={Images.desktop.sectionSix.paulinaDiaz}
                                     alt="Paulina Diaz"
                                     fill
                                     className="object-cover object-center"
                                     priority
                                 />
                                 <div className='absolute inset-0 z-10 flex flex-col text-center items-center p-6 '>
-                                    <p className='text-blue-text text-sm'>Especialista <span className='font-bold'>Índigo&reg;</span></p>
+                                    <p className='text-blue-text text-sm'>Especialista <span className='font-bold'>Indigo&reg;</span></p>
                                     <p className='text-xl text-white'>Dra. Paulina Díaz</p>
                                 </div>
                             </div>
@@ -92,14 +92,14 @@ const SectionSix = () => {
                         <div>
                             <div className='h-[470px] relative'>
                                 <Image
-                                    src={Images.mobile.sectionSix.ayeOlivera}
+                                    src={Images.desktop.sectionSix.ayeOlivera}
                                     alt="Aye Olivera"
                                     fill
                                     className="object-cover object-center"
                                     priority
                                 />
                                 <div className='absolute inset-0 z-10 flex flex-col text-center items-center p-6 '>
-                                    <p className='text-blue-text text-sm'>Especialista <span className='font-bold'>Índigo&reg;</span></p>
+                                    <p className='text-blue-text text-sm'>Especialista <span className='font-bold'>Indigo&reg;</span></p>
                                     <p className='text-xl text-white'>Dra. Ayelén Olivera</p>
                                 </div>
                             </div>
@@ -123,14 +123,14 @@ const SectionSix = () => {
                         <div>
                             <div className='h-[470px] relative'>
                                 <Image
-                                    src={Images.mobile.sectionSix.cataRey}
+                                    src={Images.desktop.sectionSix.cataRey}
                                     alt="Catalina Fey"
                                     fill
                                     className="object-cover object-center"
                                     priority
                                 />
                                 <div className='absolute inset-0 z-10 flex flex-col text-center items-center p-6 '>
-                                    <p className='text-blue-text text-sm'>Especialista <span className='font-bold'>Índigo&reg;</span></p>
+                                    <p className='text-blue-text text-sm'>Especialista <span className='font-bold'>Indigo&reg;</span></p>
                                     <p className='text-xl text-white'>Dra. Catalina Fey</p>
                                 </div>
                             </div>

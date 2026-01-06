@@ -2,10 +2,11 @@ import Image from 'next/image'
 import React from 'react'
 import { Images } from '../images'
 import { WHATSAPP_LINK } from '../constants'
+import Link from 'next/link'
 
 const SectionTwoDesktop = () => {
     return (
-        <div id="alineadores" className='bg-[#606eb2] min-h-[80vh] px-8 py-16 relative hidden md:block'>
+        <div className='bg-[#606eb2] min-h-[80vh] px-8 py-16 relative hidden md:block'>
             <div className='flex container mx-auto h-full'>
                 <div className='w-[35%] flex justify-center items-center flex-col space-y-8'>
                     <Image
@@ -39,7 +40,7 @@ const SectionTwoDesktop = () => {
             >
             </div>
             <div className='absolute -bottom-5 left-1/2 -translate-x-1/2 flex flex-col items-center justify-center z-10'>
-                <a href={WHATSAPP_LINK} target="_blank" rel="noopener noreferrer" className='cursor-pointer'>
+                <Link href="/contactar" className='cursor-pointer'>
                     <Image
                         src={Images.desktop.common.btnContactanosGradient}
                         alt="Contactanos"
@@ -47,7 +48,7 @@ const SectionTwoDesktop = () => {
                         height={50}
                         className="object-cover"
                     />
-                </a>
+                </Link>
             </div>
         </div>
     )

@@ -3,12 +3,15 @@ import Image from 'next/image'
 import React from 'react'
 import { Images } from '../images'
 import { WHATSAPP_LINK } from '../constants'
+import NavbarMobile from '@/components/navbar-mobile'
+import Link from 'next/link'
 
 
 const HeroDesktop = () => {
     return (
         <>
             <NavbarDesktop />
+            <NavbarMobile />
             <div className="bg-[url('/images/desktop/hero/bg-gradient.svg')] h-[calc(100vh-80px)] w-full bg-cover px-8 hidden md:block">
                 <div className='flex container mx-auto h-full'>
                     <div className='py-20 flex flex-col justify-between h-full w-[70%] '>
@@ -50,7 +53,7 @@ const HeroDesktop = () => {
                         />
                         {/* TODO: Cambiar btn por imagen aca y en mobile */}
                         <div className='flex items-end h-full justify-end pb-16'>
-                            <a href={WHATSAPP_LINK} target="_blank" rel="noopener noreferrer" className='cursor-pointer'>
+                            <Link href='/contactar' className='cursor-pointer'>
                                 <Image
                                     src={Images.desktop.common.btnContactanos}
                                     alt="Contactanos"
@@ -58,7 +61,7 @@ const HeroDesktop = () => {
                                     height={50}
                                     className="object-cover"
                                 />
-                            </a>
+                            </Link>
                         </div>
                     </div>
                 </div>

@@ -45,49 +45,55 @@ export default function Home() {
           "
         />
       </div>
-      <SectionTwo />
-      <div className="relative h-0 w-full z-[99] md:hidden">
-        <Image
-          src={Images.mobile.hero.ball}
-          alt="Ball"
-          width={136}
-          height={126}
-          className="
-            absolute -left-8 -bottom-4
-          "
-        />
-      </div>
-      <SectionTwoDesktop />
-      <div className="relative h-0 w-full z-[99] hidden md:block">
-        <Image
-          src={Images.desktop.hero.circle}
-          alt="Ball"
-          width={280}
-          height={230}
-          className="
-            absolute -left-30 -bottom-14
-          "
-        />
-      </div>
-      <div className="relative h-0 w-full z-[99] hidden md:block">
-        <Image
-          src={Images.desktop.hero.circle}
-          alt="Ball"
-          width={200}
-          height={200}
-          className="
-            absolute -right-30 -bottom-22
-          "
-        />
-      </div>
-      <SectionThree />
-      <SectionThreeDesktop />
+      <section id="alineadores">
+        <SectionTwo />
+        <div className="relative h-0 w-full z-[99] md:hidden">
+          <Image
+            src={Images.mobile.hero.ball}
+            alt="Ball"
+            width={136}
+            height={126}
+            className="
+              absolute -left-8 -bottom-4
+            "
+          />
+        </div>
+        <SectionTwoDesktop />
+        <div className="relative h-0 w-full z-[99] hidden md:block">
+          <Image
+            src={Images.desktop.hero.circle}
+            alt="Ball"
+            width={280}
+            height={230}
+            className="
+              absolute -left-30 -bottom-14
+            "
+          />
+        </div>
+        <div className="relative h-0 w-full z-[99] hidden md:block">
+          <Image
+            src={Images.desktop.hero.circle}
+            alt="Ball"
+            width={200}
+            height={200}
+            className="
+              absolute -right-30 -bottom-22
+            "
+          />
+        </div>
+      </section>
+      <section id="hacemos">
+        <SectionThree />
+        <SectionThreeDesktop />
+      </section>
       <SectionFour />
       <SectionFourDesktop />
       <SectionFive />
       <SectionFiveDesktop />
-      <SectionSix />
-      <SectionSixDesktop />
+      <section id="nosotras">
+        <SectionSix />
+        <SectionSixDesktop />
+      </section>
       <SectionSeven />
       <SectionSevenDesktop />
       <SectionContact />

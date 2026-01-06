@@ -6,7 +6,7 @@ const SectionContact = () => {
     return (
         <div className='mt-12 md:hidden pb-4' id="contacto">
             <div
-                className="h-[700px] bg-contain bg-no-repeat bg-center relative w-full"
+                className="min-h-[700px] bg-contain bg-no-repeat bg-center relative w-full"
                 style={{
                     backgroundImage: `url(${Images.mobile.sectionContact.caras})`
                 }}
@@ -45,7 +45,6 @@ const SectionContact = () => {
                         <p className='text-[10px] text-gray-text'>Transformá tu consultorio con Ortodoncia Digital</p>
                         <ul className='mt-4'>
                             <li>
-                                <p className=' text-blue-text text-[10px]'><span className='font-bold'>Whtsp:</span> +54 9 358 XXX XXXX</p>
                                 <p className=' text-blue-text text-[10px]'><span className='font-bold'>Correo:</span> sonrisasindigo@gmail.com</p>
                                 <p className=' text-blue-text text-[10px]'><span className='font-bold'>Ig:</span> @sonrisasindigo</p>
                                 <p className=' text-blue-text text-[10px]'><span className='font-bold'>Cursos:</span> /migrandoal3d.ar</p>

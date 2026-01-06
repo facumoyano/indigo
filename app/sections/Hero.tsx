@@ -1,14 +1,13 @@
 import Image from "next/image"
 import { Images } from "../images"
 import { WHATSAPP_LINK } from "../constants"
-import ContactFormDialog from "../components/contact-form-dialog"
+import Link from "next/link"
 
 const Hero = () => {
     return (
         // TODO: Revisar estilos
         <div
             className="flex flex-col items-center overflow-x-hidden pt-10 justify-center min-h-screen w-full bg-cover px-4 space-y-8 relative z-10 bg-[url('/images/mobile/hero/bg-hero.png')] md:hidden pb-6"
-
         >
             <span className="text-xs text-light-blue-text text-center pt-10">
                 De ortodoncistas{" "}
@@ -56,8 +55,7 @@ const Hero = () => {
             <div>
                 <span className="text-xs text-blue-custom text-center"><span className="font-bold">Indigo&reg;</span> alineadores invisibles.</span>
             </div>
-            <ContactFormDialog>
-            <button className="cursor-pointer">
+            <Link href='/contactar' className="cursor-pointer">
                 <Image
                     src={Images.desktop.common.btnContactanos}
                     alt="Contactanos"
@@ -65,8 +63,7 @@ const Hero = () => {
                     height={30}
                     className="h-9"
                 />
-            </button>
-            </ContactFormDialog>
+            </Link>
         </div>
     )
 }
