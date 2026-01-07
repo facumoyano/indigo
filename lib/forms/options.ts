@@ -69,8 +69,8 @@ export const lowerCrowdingOptions: FormOption[] = [
 ]
 
 export const indigoProfessionalOptions: FormOption[] = [
-  { value: "paulina-albar", label: "Od. Paulina Albar Día" },
-  { value: "viviana-polimant", label: "Od. Viviana Polimant" },
-  { value: "ayelen-oliver", label: "Od. Ayelén Oliver" },
+  { value: "paulina-albar", label: "Od. Paulina Albar Díaz" },
+  { value: "viviana-polimant", label: "Od. Viviana Polimanti" },
+  { value: "ayelen-oliver", label: "Od. Ayelén Olivera" },
   { value: "catalina-fey", label: "Od. Catalina Fey" },
 ]
