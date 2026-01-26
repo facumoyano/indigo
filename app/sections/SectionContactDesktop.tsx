@@ -25,8 +25,8 @@ const SectionContactDesktop = () => {
                 <p className='text-gray-text leading-6 font-semibold'>Transformá tu consultorio <br /><span className='font-semibold'>con Ortodoncia Digital</span></p>
                 <ul className='text-blue-text my-6'>
                     <li><span className='font-semibold'>Correo:</span> sonrisasindigo@gmail.com</li>
-                    <li><span className='font-semibold'>Ig:</span> @sonrisasindigo</li>
-                    <li><span className='font-semibold'>Cursos:</span> /migrandoal3d.ar</li>
+                    <li><a href="https://www.instagram.com/sonrisasindigo" target="_blank" rel="noreferrer" className=' hover:underline'><span className='font-semibold'>Ig:</span> @sonrisasindigo</a></li>
+                    <li><a href="https://www.instagram.com/migrandoal3d" target="_blank" rel="noreferrer" className=' hover:underline'><span className='font-semibold'>Cursos:</span> @migrandoal3d</a></li>
                 </ul>
             </div>
             <div className='w-full flex justify-end items-end  text-gray-text text-lg'>

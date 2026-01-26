@@ -46,9 +46,9 @@ const SectionContact = () => {
                         <ul className='mt-4'>
                             <li>
                                 <p className=' text-blue-text text-[10px]'><span className='font-bold'>Correo:</span> sonrisasindigo@gmail.com</p>
-                                <p className=' text-blue-text text-[10px]'><span className='font-bold'>Ig:</span> @sonrisasindigo</p>
-                                <p className=' text-blue-text text-[10px]'><span className='font-bold'>Cursos:</span> /migrandoal3d.ar</p>
                             </li>
+                            <li> <a href="https://www.instagram.com/sonrisasindigo" target="_blank" rel="noreferrer" className='text-blue-text text-[10px]'><span className='font-bold'>Instagram:</span> @sonrisasindigo</a>   </li>
+                            <li> <a href="https://www.instagram.com/migrandoal3d" target="_blank" rel="noreferrer" className='text-blue-text text-[10px]'><span className='font-bold'>Cursos:</span> @migrandoal3d</a>   </li>
                         </ul>
                     </div>
                 </div>
