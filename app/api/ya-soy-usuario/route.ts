@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
 import JSZip from "jszip"
 import { ZodError } from "zod"
+import { del } from "@vercel/blob"
 
 import {
   yaSoyUsuarioFileSections,
   yaSoyUsuarioFormSchema,
-  type YaSoyUsuarioFormValues,
 } from "@/lib/forms/ya-soy-usuario-schema"
 import {
   boltonOptions,
@@ -21,6 +21,12 @@ import {
 import { getRecipientEmail, getResendClient, getSenderEmail } from "@/lib/email/resend"
 import { escapeHtml } from "@/lib/utils"
 import { getYaSoyUsuarioAutoResponseHtml } from "@/lib/email/templates/ya-soy-usuario-auto-response"
+import { sendErrorNotification } from "@/lib/email/error-notification"
+
+type UploadedFile = { name: string; url: string }
+type FileUrls = Record<string, UploadedFile[]>
+
+const MAX_ATTACHMENTS_SIZE_BYTES = 25 * 1024 * 1024 // 25 MB per email (safe margin for Resend's 40MB limit after base64 inflation)
 
 const optionLabel = (value: string | undefined, options: { value: string; label: string }[]) => {
   if (!value) return "-"
@@ -34,36 +40,81 @@ const getOptional = (formData: FormData, key: string) => {
   return value.toString()
 }
 
-const getFiles = (formData: FormData, key: typeof yaSoyUsuarioFileSections[number]["key"]) =>
-  formData
-    .getAll(key)
-    .filter((value): value is File => value instanceof File)
-
-const buildZipAttachments = async (data: YaSoyUsuarioFormValues) => {
-  const attachments: { filename: string; content: string }[] = []
+const buildZipAttachments = async (fileUrls: FileUrls) => {
+  const attachments: { filename: string; content: string; sizeBytes: number }[] = []
 
   for (const section of yaSoyUsuarioFileSections) {
-    const files = data[section.key]
-    if (!files || files.length === 0) continue
+    const files = fileUrls[section.key] ?? []
+    if (files.length === 0) continue
 
     const zip = new JSZip()
 
     for (const [index, file] of files.entries()) {
-      const arrayBuffer = await file.arrayBuffer()
+      const response = await fetch(file.url)
+      const arrayBuffer = await response.arrayBuffer()
       const safeName = file.name && file.name.trim().length > 0 ? file.name : `${section.zipName}-${index + 1}`
       zip.file(safeName, arrayBuffer)
     }
 
-    const content = await zip.generateAsync({ type: "base64" })
-    attachments.push({ filename: `${section.zipName}.zip`, content })
+    const buffer = await zip.generateAsync({ type: "nodebuffer" })
+    const content = buffer.toString("base64")
+    attachments.push({
+      filename: `${section.zipName}.zip`,
+      content,
+      sizeBytes: buffer.byteLength,
+    })
   }
 
   return attachments
 }
 
+const partitionAttachments = (attachments: { filename: string; content: string; sizeBytes: number }[]) => {
+  const batches: { filename: string; content: string }[][] = []
+  let currentBatch: { filename: string; content: string }[] = []
+  let currentSize = 0
+
+  for (const att of attachments) {
+    if (currentBatch.length > 0 && currentSize + att.sizeBytes > MAX_ATTACHMENTS_SIZE_BYTES) {
+      batches.push(currentBatch)
+      currentBatch = []
+      currentSize = 0
+    }
+    currentBatch.push({ filename: att.filename, content: att.content })
+    currentSize += att.sizeBytes
+  }
+
+  if (currentBatch.length > 0) {
+    batches.push(currentBatch)
+  }
+
+  return batches
+}
+
+const cleanupBlobFiles = async (fileUrls: FileUrls) => {
+  const urls = Object.values(fileUrls).flat().map((f) => f.url)
+  if (urls.length > 0) {
+    await del(urls).catch(() => {})
+  }
+}
+
 export async function POST(req: NextRequest) {
+  let fileUrls: FileUrls = {}
+  let rawFormData: Record<string, unknown> = {}
+
   try {
     const formData = await req.formData()
+
+    fileUrls = JSON.parse(getString(formData, "fileUrls") || "{}")
+
+    // Capture raw form data for error notifications
+    for (const [key, value] of formData.entries()) {
+      if (key === "fileUrls") continue
+      rawFormData[key] = typeof value === "string" ? value : `[File: ${value.name}]`
+    }
+    rawFormData.fileUrls = Object.fromEntries(
+      Object.entries(fileUrls).map(([k, v]) => [k, v.map((f) => f.name)])
+    )
+
     const parsedData = yaSoyUsuarioFormSchema.parse({
       professionalFullName: getString(formData, "professionalFullName"),
       professionalPhone: getString(formData, "professionalPhone"),
@@ -73,12 +124,12 @@ export async function POST(req: NextRequest) {
       patientBirthDay: getString(formData, "patientBirthDay"),
       patientBirthMonth: getString(formData, "patientBirthMonth"),
       patientBirthYear: getString(formData, "patientBirthYear"),
-      facialPhotos: getFiles(formData, "facialPhotos"),
-      intraoralPhotos: getFiles(formData, "intraoralPhotos"),
-      lateralTeleradiography: getFiles(formData, "lateralTeleradiography"),
-      orthopantomography: getFiles(formData, "orthopantomography"),
-      cbct: getFiles(formData, "cbct"),
-      intraoralScan: getFiles(formData, "intraoralScan"),
+      facialPhotos: [],
+      intraoralPhotos: [],
+      lateralTeleradiography: [],
+      orthopantomography: [],
+      cbct: [],
+      intraoralScan: [],
       mainReason: getString(formData, "mainReason"),
       previousTreatments: getOptional(formData, "previousTreatments"),
       jawsToTreat: getOptional(formData, "jawsToTreat"),
@@ -94,7 +145,9 @@ export async function POST(req: NextRequest) {
       indigoProfessional: getOptional(formData, "indigoProfessional"),
     })
 
-    const attachments = await buildZipAttachments(parsedData)
+    const attachments = await buildZipAttachments(fileUrls)
+    const batches = partitionAttachments(attachments)
+
     const resend = getResendClient()
     const to = getRecipientEmail()
     const from = getSenderEmail()
@@ -103,10 +156,18 @@ export async function POST(req: NextRequest) {
 
     const fileSummary = yaSoyUsuarioFileSections
       .map((section) => {
-        const files = parsedData[section.key]
+        const files = fileUrls[section.key] ?? []
+        if (files.length === 0) {
+          return `<li>${section.label}: sin archivos</li>`
+        }
         return `<li>${section.label}: ${files.length} archivo(s) adjuntos (${section.zipName}.zip)</li>`
       })
       .join("")
+
+    const totalEmails = batches.length || 1
+    const partNote = totalEmails > 1
+      ? `<p><em>Debido al tamaño de los archivos, se enviaron en ${totalEmails} emails.</em></p>`
+      : ""
 
     const html = `
       <h2>Nuevo registro de caso clínico</h2>
@@ -142,18 +203,35 @@ export async function POST(req: NextRequest) {
         <li><strong>Profesional Indigo asignado:</strong> ${escapeHtml(assignedProfessional)}</li>
       </ul>
       <h3>Archivos adjuntos</h3>
+      ${partNote}
       <ul>${fileSummary}</ul>
     `
 
+    const baseSubject = `Nuevo caso clínico - ${assignedProfessional} - ${parsedData.professionalFullName}`
+
+    // First email: case details + first batch of attachments (or no attachments if none)
     await resend.emails.send({
       from,
       to,
       replyTo,
-      subject: `Nuevo caso clínico - ${assignedProfessional} - ${parsedData.professionalFullName}`,
+      subject: totalEmails > 1 ? `${baseSubject} (parte 1/${totalEmails})` : baseSubject,
       html,
-      attachments,
+      attachments: batches[0] ?? [],
     })
 
+    // Additional emails for remaining batches
+    for (let i = 1; i < batches.length; i++) {
+      await resend.emails.send({
+        from,
+        to,
+        replyTo,
+        subject: `${baseSubject} (parte ${i + 1}/${totalEmails})`,
+        html: `<p>Archivos adicionales del caso clínico de <strong>${escapeHtml(parsedData.patientFullName)}</strong> (parte ${i + 1} de ${totalEmails}).</p>`,
+        attachments: batches[i],
+      })
+    }
+
+    // Auto-response to the professional
     await resend.emails.send({
       from,
       to: parsedData.professionalEmail,
@@ -162,8 +240,19 @@ export async function POST(req: NextRequest) {
       html: getYaSoyUsuarioAutoResponseHtml(parsedData.professionalFullName, parsedData.patientFullName),
     })
 
+    // Cleanup blob files after successful send
+    await cleanupBlobFiles(fileUrls)
+
     return NextResponse.json({ success: true })
   } catch (error) {
+    await cleanupBlobFiles(fileUrls)
+
+    await sendErrorNotification({
+      route: "/api/ya-soy-usuario",
+      error,
+      formData: rawFormData,
+    })
+
     if (error instanceof ZodError) {
       return NextResponse.json({ error: error.issues[0]?.message ?? "Datos inválidos." }, { status: 400 })
     }

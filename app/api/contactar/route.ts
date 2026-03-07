@@ -6,6 +6,7 @@ import { alignerOptions, discoveryOptions } from "@/lib/forms/options"
 import { getRecipientEmail, getResendClient, getSenderEmail } from "@/lib/email/resend"
 import { getContactAutoResponseHtml } from "@/lib/email/templates/contact-auto-response"
 import { escapeHtml } from "@/lib/utils"
+import { sendErrorNotification } from "@/lib/email/error-notification"
 
 const mapOptionLabel = (value: string | undefined, options: { value: string; label: string }[]) => {
   if (!value) return "-"
@@ -13,8 +14,11 @@ const mapOptionLabel = (value: string | undefined, options: { value: string; lab
 }
 
 export async function POST(req: NextRequest) {
+  let rawPayload: Record<string, unknown> = {}
+
   try {
     const payload = await req.json()
+    rawPayload = payload
     const data = contactFormSchema.parse(payload)
 
     const resend = getResendClient()
@@ -52,6 +56,12 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true })
   } catch (error) {
+    await sendErrorNotification({
+      route: "/api/contactar",
+      error,
+      formData: rawPayload,
+    })
+
     if (error instanceof ZodError) {
       return NextResponse.json({ error: error.issues[0]?.message ?? "Datos inválidos." }, { status: 400 })
     }

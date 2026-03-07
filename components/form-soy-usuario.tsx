@@ -153,19 +153,52 @@ const FormYaSoyUsuario = () => {
         }
     }
 
+    const uploadFilesToBlob = async (files: File[], section: string): Promise<{ name: string; url: string }[]> => {
+        if (files.length === 0) return []
+
+        const body = new FormData()
+        body.append('section', section)
+        files.forEach((file) => body.append('files', file))
+
+        const response = await fetch('/api/upload', { method: 'POST', body })
+        const payload = await response.json().catch(() => ({}))
+
+        if (!response.ok) {
+            throw new Error(payload?.error ?? `Error al subir archivos de ${section}.`)
+        }
+
+        return payload.files
+    }
+
     const onSubmit = async (values: YaSoyUsuarioFormValues) => {
         setIsSubmitting(true)
         setFeedback(null)
 
         try {
+            const fileSections = [
+                'facialPhotos', 'intraoralPhotos', 'lateralTeleradiography',
+                'orthopantomography', 'cbct', 'intraoralScan',
+            ] as const
+
+            const uploadResults = await Promise.all(
+                fileSections.map((section) =>
+                    uploadFilesToBlob(values[section] ?? [], section)
+                )
+            )
+
+            const fileUrls: Record<string, { name: string; url: string }[]> = {}
+            fileSections.forEach((section, index) => {
+                fileUrls[section] = uploadResults[index]
+            })
+
             const body = new FormData()
             Object.entries(values).forEach(([key, value]) => {
-                if (isFileArray(value)) {
-                    value.forEach((file) => body.append(key, file))
-                } else if (value !== undefined && value !== null) {
+                if (isFileArray(value)) return
+                if (value !== undefined && value !== null) {
                     body.append(key, String(value))
                 }
             })
+            body.append('fileUrls', JSON.stringify(fileUrls))
 
             const response = await fetch('/api/ya-soy-usuario', {
                 method: 'POST',
