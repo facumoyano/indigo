@@ -166,7 +166,7 @@ const FormYaSoyUsuario = () => {
                 const blob = await upload(
                     `ya-soy-usuario/${section}/${Date.now()}-${safeName}`,
                     file,
-                    { access: 'public', handleUploadUrl: '/api/upload' }
+                    { access: 'private', handleUploadUrl: '/api/upload' }
                 )
 
                 return { name: safeName, url: blob.url }
