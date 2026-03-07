@@ -241,12 +241,12 @@ export async function POST(req: NextRequest) {
       html: getYaSoyUsuarioAutoResponseHtml(parsedData.professionalFullName, parsedData.patientFullName),
     })
 
-    // Cleanup blob files after successful send
-    await cleanupBlobFiles(fileUrls)
+    // TODO: re-enable cleanup after debugging
+    // await cleanupBlobFiles(fileUrls)
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    await cleanupBlobFiles(fileUrls)
+    // await cleanupBlobFiles(fileUrls)
 
     await sendErrorNotification({
       route: "/api/ya-soy-usuario",
