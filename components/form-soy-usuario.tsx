@@ -20,6 +20,7 @@ import {
     yesNoOptions,
 } from '@/lib/forms/options'
 import { yaSoyUsuarioFormSchema, type YaSoyUsuarioFormValues } from '@/lib/forms/ya-soy-usuario-schema'
+import { upload } from '@vercel/blob/client'
 
 const textareaClasses = "min-h-[120px] w-full rounded-md border border-gray-300 bg-transparent px-3 py-2 text-sm md:text-base shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
 
@@ -156,18 +157,23 @@ const FormYaSoyUsuario = () => {
     const uploadFilesToBlob = async (files: File[], section: string): Promise<{ name: string; url: string }[]> => {
         if (files.length === 0) return []
 
-        const body = new FormData()
-        body.append('section', section)
-        files.forEach((file) => body.append('files', file))
+        const results = await Promise.all(
+            files.map(async (file, index) => {
+                const safeName = file.name && file.name.trim().length > 0
+                    ? file.name
+                    : `${section}-${index + 1}`
 
-        const response = await fetch('/api/upload', { method: 'POST', body })
-        const payload = await response.json().catch(() => ({}))
+                const blob = await upload(
+                    `ya-soy-usuario/${section}/${Date.now()}-${safeName}`,
+                    file,
+                    { access: 'public', handleUploadUrl: '/api/upload' }
+                )
 
-        if (!response.ok) {
-            throw new Error(payload?.error ?? `Error al subir archivos de ${section}.`)
-        }
+                return { name: safeName, url: blob.url }
+            })
+        )
 
-        return payload.files
+        return results
     }
 
     const onSubmit = async (values: YaSoyUsuarioFormValues) => {

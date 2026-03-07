@@ -1,35 +1,26 @@
+import { handleUpload, type HandleUploadBody } from "@vercel/blob/client"
 import { NextRequest, NextResponse } from "next/server"
-import { put } from "@vercel/blob"
 
 export async function POST(req: NextRequest) {
+  const body = (await req.json()) as HandleUploadBody
+
   try {
-    const formData = await req.formData()
-    const files = formData.getAll("files").filter((v): v is File => v instanceof File)
-    const section = formData.get("section")?.toString() ?? "archivo"
+    const jsonResponse = await handleUpload({
+      body,
+      request: req,
+      onBeforeGenerateToken: async (pathname) => {
+        return {
+          allowedContentTypes: undefined,
+          maximumSizeInBytes: 10 * 1024 * 1024 * 1024, // 10 GB (matches max form constraint)
+        }
+      },
+      onUploadCompleted: async () => {},
+    })
 
-    if (files.length === 0) {
-      return NextResponse.json({ error: "No se recibieron archivos." }, { status: 400 })
-    }
-
-    const uploaded = await Promise.all(
-      files.map(async (file, index) => {
-        const safeName = file.name && file.name.trim().length > 0
-          ? file.name
-          : `${section}-${index + 1}`
-
-        const blob = await put(`ya-soy-usuario/${section}/${Date.now()}-${safeName}`, file, {
-          access: "public",
-          addRandomSuffix: true,
-        })
-
-        return { name: safeName, url: blob.url }
-      })
-    )
-
-    return NextResponse.json({ files: uploaded })
+    return NextResponse.json(jsonResponse)
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Error al subir archivos." },
+      { error: error instanceof Error ? error.message : "Error al subir archivo." },
       { status: 500 }
     )
   }
