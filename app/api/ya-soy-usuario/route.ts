@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import JSZip from "jszip"
 import { ZodError } from "zod"
-import { del } from "@vercel/blob"
+import { del, getDownloadUrl } from "@vercel/blob"
 
 import {
   yaSoyUsuarioFileSections,
@@ -50,7 +50,8 @@ const buildZipAttachments = async (fileUrls: FileUrls) => {
     const zip = new JSZip()
 
     for (const [index, file] of files.entries()) {
-      const response = await fetch(file.url)
+      const downloadUrl = await getDownloadUrl(file.url)
+      const response = await fetch(downloadUrl)
       const arrayBuffer = await response.arrayBuffer()
       const safeName = file.name && file.name.trim().length > 0 ? file.name : `${section.zipName}-${index + 1}`
       zip.file(safeName, arrayBuffer)
