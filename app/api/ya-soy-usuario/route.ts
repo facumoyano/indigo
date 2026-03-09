@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import JSZip from "jszip"
 import { ZodError } from "zod"
-import { del, getDownloadUrl } from "@vercel/blob"
+import { del, get } from "@vercel/blob"
 
 import {
   yaSoyUsuarioFileSections,
@@ -50,9 +50,13 @@ const buildZipAttachments = async (fileUrls: FileUrls) => {
     const zip = new JSZip()
 
     for (const [index, file] of files.entries()) {
-      const downloadUrl = await getDownloadUrl(file.url)
-      const response = await fetch(downloadUrl)
-      const arrayBuffer = await response.arrayBuffer()
+      const result = await get(file.url, { access: "private" })
+
+      if (!result || result.statusCode !== 200) {
+        throw new Error(`Error descargando "${file.name}" desde Blob.`)
+      }
+
+      const arrayBuffer = await new Response(result.stream).arrayBuffer()
       const safeName = file.name && file.name.trim().length > 0 ? file.name : `${section.zipName}-${index + 1}`
       zip.file(safeName, arrayBuffer)
     }
@@ -241,12 +245,11 @@ export async function POST(req: NextRequest) {
       html: getYaSoyUsuarioAutoResponseHtml(parsedData.professionalFullName, parsedData.patientFullName),
     })
 
-    // TODO: re-enable cleanup after debugging
-    // await cleanupBlobFiles(fileUrls)
+    await cleanupBlobFiles(fileUrls)
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    // await cleanupBlobFiles(fileUrls)
+    await cleanupBlobFiles(fileUrls)
 
     await sendErrorNotification({
       route: "/api/ya-soy-usuario",

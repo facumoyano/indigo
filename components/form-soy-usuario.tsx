@@ -8,6 +8,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, useForm
 import Image from "next/image"
 import { Images } from "@/app/images"
 import { Upload, X } from "lucide-react"
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import {
     boltonOptions,
     crossbiteOptions,
@@ -83,6 +84,7 @@ const isFileArray = (value: unknown): value is File[] =>
 
 const FormYaSoyUsuario = () => {
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const [submitStatus, setSubmitStatus] = useState('')
     const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
 
     const form = useForm({
@@ -186,6 +188,7 @@ const FormYaSoyUsuario = () => {
                 'orthopantomography', 'cbct', 'intraoralScan',
             ] as const
 
+            setSubmitStatus('Subiendo archivos...')
             const uploadResults = await Promise.all(
                 fileSections.map((section) =>
                     uploadFilesToBlob(values[section] ?? [], section)
@@ -206,6 +209,7 @@ const FormYaSoyUsuario = () => {
             })
             body.append('fileUrls', JSON.stringify(fileUrls))
 
+            setSubmitStatus('Enviando formulario...')
             const response = await fetch('/api/ya-soy-usuario', {
                 method: 'POST',
                 body,
@@ -917,6 +921,18 @@ planificar el tratamiento del paciente.</FormLabel>
                         </p>
                     )}
                 </div>
+
+                <Dialog open={isSubmitting}>
+                    <DialogContent showCloseButton={false} className="flex flex-col items-center gap-6 py-10">
+                        <DialogTitle className="sr-only">Enviando caso</DialogTitle>
+                        <div className="flex items-center gap-2">
+                            <span className="h-3 w-3 rounded-full bg-blue-custom animate-[pulse-dot_1.4s_ease-in-out_infinite]" />
+                            <span className="h-3 w-3 rounded-full bg-blue-custom animate-[pulse-dot_1.4s_ease-in-out_0.2s_infinite]" />
+                            <span className="h-3 w-3 rounded-full bg-blue-custom animate-[pulse-dot_1.4s_ease-in-out_0.4s_infinite]" />
+                        </div>
+                        <p className="text-sm text-gray-text">{submitStatus}</p>
+                    </DialogContent>
+                </Dialog>
             </form>
         </Form>
     )
