@@ -213,34 +213,34 @@ export async function POST(req: NextRequest) {
     `
 
     const baseSubject = `Nuevo caso clínico - ${assignedProfessional} - ${parsedData.professionalFullName}`
+    const threadMessageId = `<caso-${Date.now()}@email.sonrisasindigo.com.ar>`
 
     // First email: case details + first batch of attachments (or no attachments if none)
-    const firstEmail = await resend.emails.send({
+    await resend.emails.send({
       from,
       to,
       replyTo,
-      subject: totalEmails > 1 ? `${baseSubject} (parte 1/${totalEmails})` : baseSubject,
+      subject: baseSubject,
       html,
       attachments: batches[0] ?? [],
+      headers: {
+        "Message-ID": threadMessageId,
+      },
     })
 
     // Additional emails for remaining batches (threaded with the first)
-    const firstMessageId = firstEmail.data?.id ? `<${firstEmail.data.id}@resend.dev>` : undefined
-
     for (let i = 1; i < batches.length; i++) {
       await resend.emails.send({
         from,
         to,
         replyTo,
-        subject: `Re: ${baseSubject} (parte ${i + 1}/${totalEmails})`,
+        subject: baseSubject,
         html: `<p>Archivos adicionales del caso clínico de <strong>${escapeHtml(parsedData.patientFullName)}</strong> (parte ${i + 1} de ${totalEmails}).</p>`,
         attachments: batches[i],
-        ...(firstMessageId && {
-          headers: {
-            "In-Reply-To": firstMessageId,
-            "References": firstMessageId,
-          },
-        }),
+        headers: {
+          "In-Reply-To": threadMessageId,
+          "References": threadMessageId,
+        },
       })
     }
 
