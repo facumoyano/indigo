@@ -16,8 +16,7 @@ export const getResendClient = () => {
   return client
 }
 
-// const notificationRecipients = ["odcatalina@sonrisasindigo.com.ar", "odayelen@sonrisasindigo.com.ar", "odviviana@sonrisasindigo.com.ar", "odpaulina@sonrisasindigo.com.ar"]
-const notificationRecipients = ["facumoyano44@gmail.com"]
+const notificationRecipients = ["odcatalina@sonrisasindigo.com.ar", "odayelen@sonrisasindigo.com.ar", "odviviana@sonrisasindigo.com.ar", "odpaulina@sonrisasindigo.com.ar"]
 const indigoSenderEmail = "Indigo <contacto@email.sonrisasindigo.com.ar>"
 
 export const getRecipientEmail = () => notificationRecipients
