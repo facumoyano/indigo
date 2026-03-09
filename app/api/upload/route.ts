@@ -1,6 +1,8 @@
 import { handleUpload, type HandleUploadBody } from "@vercel/blob/client"
 import { NextRequest, NextResponse } from "next/server"
 
+import { YA_SOY_USUARIO_MAX_UPLOAD_SIZE_BYTES } from "@/lib/forms/ya-soy-usuario-file-constraints"
+
 export async function POST(req: NextRequest) {
   const body = (await req.json()) as HandleUploadBody
 
@@ -11,7 +13,7 @@ export async function POST(req: NextRequest) {
       onBeforeGenerateToken: async (pathname) => {
         return {
           allowedContentTypes: undefined,
-          maximumSizeInBytes: 10 * 1024 * 1024 * 1024, // 10 GB (matches max form constraint)
+          maximumSizeInBytes: YA_SOY_USUARIO_MAX_UPLOAD_SIZE_BYTES,
         }
       },
       onUploadCompleted: async () => {},

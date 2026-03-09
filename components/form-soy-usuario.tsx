@@ -20,24 +20,24 @@ import {
     upperCrowdingOptions,
     yesNoOptions,
 } from '@/lib/forms/options'
+import { yaSoyUsuarioFileConstraints, type YaSoyUsuarioFileFieldName } from '@/lib/forms/ya-soy-usuario-file-constraints'
 import { yaSoyUsuarioFormSchema, type YaSoyUsuarioFormValues } from '@/lib/forms/ya-soy-usuario-schema'
 import { upload } from '@vercel/blob/client'
 
 const textareaClasses = "min-h-[120px] w-full rounded-md border border-gray-300 bg-transparent px-3 py-2 text-sm md:text-base shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
 
-const megabyte = 1024 * 1024
-const gigabyte = megabyte * 1024
+const fileFieldConstraints = yaSoyUsuarioFileConstraints
+type FileFieldName = YaSoyUsuarioFileFieldName
 
-const fileFieldConstraints = {
-    facialPhotos: { maxCount: 5, maxSizeBytes: 100 * megabyte, maxSizeLabel: '100 MB' },
-    intraoralPhotos: { maxCount: 10, maxSizeBytes: 100 * megabyte, maxSizeLabel: '100 MB' },
-    lateralTeleradiography: { maxCount: 1, maxSizeBytes: gigabyte, maxSizeLabel: '1 GB' },
-    orthopantomography: { maxCount: 1, maxSizeBytes: 10 * gigabyte, maxSizeLabel: '10 GB' },
-    cbct: { maxCount: 1, maxSizeBytes: gigabyte, maxSizeLabel: '1 GB' },
-    intraoralScan: { maxCount: 5, maxSizeBytes: gigabyte, maxSizeLabel: '1 GB' },
-} as const
+const FileConstraintsHint = ({ fieldName }: { fieldName: FileFieldName }) => {
+    const constraints = fileFieldConstraints[fieldName]
 
-type FileFieldName = keyof typeof fileFieldConstraints
+    return (
+        <div className="text-xs text-gray-text">
+            Numero maximo archivos: {constraints.maxCount} <br />Peso maximo por archivo: {constraints.maxSizeLabel}
+        </div>
+    )
+}
 
 const FileUploadButton = ({ text = "Añadir archivo" }: { text?: string }) => {
     const { formItemId } = useFormField()
@@ -384,7 +384,7 @@ const FormYaSoyUsuario = () => {
                                 </FormControl>
                                 <div className="flex gap-2">
                                     <FileUploadButton />
-                                    <div className="text-xs text-gray-text">Número máximo archivos: 5 <br />Peso máximo archivo: 100 MB</div>
+                                    <FileConstraintsHint fieldName="facialPhotos" />
                                 </div>
                                 <SelectedFilesList
                                     files={field.value}
@@ -425,7 +425,7 @@ const FormYaSoyUsuario = () => {
                                 </FormControl>
                                 <div className="flex gap-2">
                                     <FileUploadButton />
-                                    <div className="text-xs text-gray-text">Número máximo archivos: 10 <br />Peso máximo archivo: 100 MB</div>
+                                    <FileConstraintsHint fieldName="intraoralPhotos" />
                                 </div>
                                 <SelectedFilesList
                                     files={field.value}
@@ -463,7 +463,7 @@ const FormYaSoyUsuario = () => {
                                 </FormControl>
                                 <div className="flex gap-2">
                                     <FileUploadButton />
-                                    <div className="text-xs text-gray-text">Número máximo archivos: 1 <br />Peso máximo archivo: 1 GB</div>
+                                    <FileConstraintsHint fieldName="lateralTeleradiography" />
                                 </div>
                                 <SelectedFilesList
                                     files={field.value}
@@ -501,7 +501,7 @@ const FormYaSoyUsuario = () => {
                                 </FormControl>
                                 <div className="flex gap-2">
                                     <FileUploadButton />
-                                    <div className="text-xs text-gray-text">Número máximo archivos: 1 <br />Peso máximo archivo: 10 GB</div>
+                                    <FileConstraintsHint fieldName="orthopantomography" />
                                 </div>
                                 <SelectedFilesList
                                     files={field.value}
@@ -539,7 +539,7 @@ const FormYaSoyUsuario = () => {
                                 </FormControl>
                                 <div className="flex gap-2">
                                     <FileUploadButton />
-                                    <div className="text-xs text-gray-text">Número máximo archivos: 1 <br />Peso máximo archivo: 1 GB</div>
+                                    <FileConstraintsHint fieldName="cbct" />
                                 </div>
                                 <SelectedFilesList
                                     files={field.value}
@@ -577,7 +577,7 @@ const FormYaSoyUsuario = () => {
                                 </FormControl>
                                 <div className="flex gap-2">
                                     <FileUploadButton />
-                                    <div className="text-xs text-gray-text">Número máximo archivos: 5 <br />Peso máximo archivo: 1GB</div>
+                                    <FileConstraintsHint fieldName="intraoralScan" />
                                 </div>
                                 <SelectedFilesList
                                     files={field.value}

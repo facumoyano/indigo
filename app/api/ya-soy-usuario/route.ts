@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
-import JSZip from "jszip"
 import { ZodError } from "zod"
-import { del, get } from "@vercel/blob"
+import { del } from "@vercel/blob"
 
 import {
   yaSoyUsuarioFileSections,
@@ -22,11 +21,13 @@ import { getRecipientEmail, getResendClient, getSenderEmail } from "@/lib/email/
 import { escapeHtml } from "@/lib/utils"
 import { getYaSoyUsuarioAutoResponseHtml } from "@/lib/email/templates/ya-soy-usuario-auto-response"
 import { sendErrorNotification } from "@/lib/email/error-notification"
+import {
+  createYaSoyUsuarioDownloadToken,
+  createYaSoyUsuarioManifest,
+} from "@/lib/ya-soy-usuario-downloads"
 
 type UploadedFile = { name: string; url: string }
 type FileUrls = Record<string, UploadedFile[]>
-
-const MAX_ATTACHMENTS_SIZE_BYTES = 25 * 1024 * 1024 // 25 MB per email (safe margin for Resend's 40MB limit after base64 inflation)
 
 const optionLabel = (value: string | undefined, options: { value: string; label: string }[]) => {
   if (!value) return "-"
@@ -40,63 +41,8 @@ const getOptional = (formData: FormData, key: string) => {
   return value.toString()
 }
 
-const buildZipAttachments = async (fileUrls: FileUrls) => {
-  const attachments: { filename: string; content: string; sizeBytes: number }[] = []
-
-  for (const section of yaSoyUsuarioFileSections) {
-    const files = fileUrls[section.key] ?? []
-    if (files.length === 0) continue
-
-    const zip = new JSZip()
-
-    for (const [index, file] of files.entries()) {
-      const result = await get(file.url, { access: "private" })
-
-      if (!result || result.statusCode !== 200) {
-        throw new Error(`Error descargando "${file.name}" desde Blob.`)
-      }
-
-      const arrayBuffer = await new Response(result.stream).arrayBuffer()
-      const safeName = file.name && file.name.trim().length > 0 ? file.name : `${section.zipName}-${index + 1}`
-      zip.file(safeName, arrayBuffer)
-    }
-
-    const buffer = await zip.generateAsync({ type: "nodebuffer" })
-    const content = buffer.toString("base64")
-    attachments.push({
-      filename: `${section.zipName}.zip`,
-      content,
-      sizeBytes: buffer.byteLength,
-    })
-  }
-
-  return attachments
-}
-
-const partitionAttachments = (attachments: { filename: string; content: string; sizeBytes: number }[]) => {
-  const batches: { filename: string; content: string }[][] = []
-  let currentBatch: { filename: string; content: string }[] = []
-  let currentSize = 0
-
-  for (const att of attachments) {
-    if (currentBatch.length > 0 && currentSize + att.sizeBytes > MAX_ATTACHMENTS_SIZE_BYTES) {
-      batches.push(currentBatch)
-      currentBatch = []
-      currentSize = 0
-    }
-    currentBatch.push({ filename: att.filename, content: att.content })
-    currentSize += att.sizeBytes
-  }
-
-  if (currentBatch.length > 0) {
-    batches.push(currentBatch)
-  }
-
-  return batches
-}
-
-const cleanupBlobFiles = async (fileUrls: FileUrls) => {
-  const urls = Object.values(fileUrls).flat().map((f) => f.url)
+const cleanupBlobFiles = async (fileUrls: FileUrls, extraUrls: string[] = []) => {
+  const urls = [...Object.values(fileUrls).flat().map((f) => f.url), ...extraUrls]
   if (urls.length > 0) {
     await del(urls).catch(() => {})
   }
@@ -105,6 +51,7 @@ const cleanupBlobFiles = async (fileUrls: FileUrls) => {
 export async function POST(req: NextRequest) {
   let fileUrls: FileUrls = {}
   let rawFormData: Record<string, unknown> = {}
+  let manifestUrl: string | null = null
 
   try {
     const formData = await req.formData()
@@ -150,14 +97,26 @@ export async function POST(req: NextRequest) {
       indigoProfessional: getOptional(formData, "indigoProfessional"),
     })
 
-    const attachments = await buildZipAttachments(fileUrls)
-    const batches = partitionAttachments(attachments)
-
     const resend = getResendClient()
     const to = getRecipientEmail()
     const from = getSenderEmail()
     const replyTo = `${parsedData.professionalFullName} <${parsedData.professionalEmail}>`
     const assignedProfessional = optionLabel(parsedData.indigoProfessional, indigoProfessionalOptions)
+
+    const manifest = await createYaSoyUsuarioManifest({
+      professionalFullName: parsedData.professionalFullName,
+      patientFullName: parsedData.patientFullName,
+      createdAt: new Date().toISOString(),
+      sections: yaSoyUsuarioFileSections.map((section) => ({
+        key: section.key,
+        label: section.label,
+        files: fileUrls[section.key] ?? [],
+      })),
+    })
+    manifestUrl = manifest.url
+
+    const downloadToken = createYaSoyUsuarioDownloadToken(manifest.pathname)
+    const filesLink = new URL(`/ya-soy-usuario-archivos?token=${encodeURIComponent(downloadToken)}`, req.nextUrl.origin).toString()
 
     const fileSummary = yaSoyUsuarioFileSections
       .map((section) => {
@@ -165,14 +124,9 @@ export async function POST(req: NextRequest) {
         if (files.length === 0) {
           return `<li>${section.label}: sin archivos</li>`
         }
-        return `<li>${section.label}: ${files.length} archivo(s) adjuntos (${section.zipName}.zip)</li>`
+        return `<li>${section.label}: ${files.length} archivo(s)</li>`
       })
       .join("")
-
-    const totalEmails = batches.length || 1
-    const partNote = totalEmails > 1
-      ? `<p><em>Debido al tamaño de los archivos, se enviaron en ${totalEmails} emails.</em></p>`
-      : ""
 
     const html = `
       <h2>Nuevo registro de caso clínico</h2>
@@ -207,42 +161,21 @@ export async function POST(req: NextRequest) {
         <li><strong>Información adicional:</strong> ${escapeHtml(parsedData.additionalInfo)}</li>
         <li><strong>Profesional Indigo asignado:</strong> ${escapeHtml(assignedProfessional)}</li>
       </ul>
-      <h3>Archivos adjuntos</h3>
-      ${partNote}
+      <h3>Archivos del caso</h3>
       <ul>${fileSummary}</ul>
+      <p><a href="${escapeHtml(filesLink)}">Abrir archivos del caso</a></p>
+      <p><em>El link estará disponible durante 7 dias.</em></p>
     `
 
     const baseSubject = `Nuevo caso clínico - ${assignedProfessional} - ${parsedData.professionalFullName}`
-    const threadMessageId = `<caso-${Date.now()}@email.sonrisasindigo.com.ar>`
 
-    // First email: case details + first batch of attachments (or no attachments if none)
     await resend.emails.send({
       from,
       to,
       replyTo,
       subject: baseSubject,
       html,
-      attachments: batches[0] ?? [],
-      headers: {
-        "Message-ID": threadMessageId,
-      },
     })
-
-    // Additional emails for remaining batches (threaded with the first)
-    for (let i = 1; i < batches.length; i++) {
-      await resend.emails.send({
-        from,
-        to,
-        replyTo,
-        subject: baseSubject,
-        html: `<p>Archivos adicionales del caso clínico de <strong>${escapeHtml(parsedData.patientFullName)}</strong> (parte ${i + 1} de ${totalEmails}).</p>`,
-        attachments: batches[i],
-        headers: {
-          "In-Reply-To": threadMessageId,
-          "References": threadMessageId,
-        },
-      })
-    }
 
     // Auto-response to the professional
     await resend.emails.send({
@@ -253,11 +186,9 @@ export async function POST(req: NextRequest) {
       html: getYaSoyUsuarioAutoResponseHtml(parsedData.professionalFullName, parsedData.patientFullName),
     })
 
-    await cleanupBlobFiles(fileUrls)
-
     return NextResponse.json({ success: true })
   } catch (error) {
-    await cleanupBlobFiles(fileUrls)
+    await cleanupBlobFiles(fileUrls, manifestUrl ? [manifestUrl] : [])
 
     await sendErrorNotification({
       route: "/api/ya-soy-usuario",
