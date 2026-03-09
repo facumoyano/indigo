@@ -215,7 +215,7 @@ export async function POST(req: NextRequest) {
     const baseSubject = `Nuevo caso clínico - ${assignedProfessional} - ${parsedData.professionalFullName}`
 
     // First email: case details + first batch of attachments (or no attachments if none)
-    await resend.emails.send({
+    const firstEmail = await resend.emails.send({
       from,
       to,
       replyTo,
@@ -224,15 +224,23 @@ export async function POST(req: NextRequest) {
       attachments: batches[0] ?? [],
     })
 
-    // Additional emails for remaining batches
+    // Additional emails for remaining batches (threaded with the first)
+    const firstMessageId = firstEmail.data?.id ? `<${firstEmail.data.id}@resend.dev>` : undefined
+
     for (let i = 1; i < batches.length; i++) {
       await resend.emails.send({
         from,
         to,
         replyTo,
-        subject: `${baseSubject} (parte ${i + 1}/${totalEmails})`,
+        subject: `Re: ${baseSubject} (parte ${i + 1}/${totalEmails})`,
         html: `<p>Archivos adicionales del caso clínico de <strong>${escapeHtml(parsedData.patientFullName)}</strong> (parte ${i + 1} de ${totalEmails}).</p>`,
         attachments: batches[i],
+        ...(firstMessageId && {
+          headers: {
+            "In-Reply-To": firstMessageId,
+            "References": firstMessageId,
+          },
+        }),
       })
     }
 
