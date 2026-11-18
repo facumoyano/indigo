@@ -76,14 +76,19 @@ export const putObject = async (key: string, body: string | Uint8Array, contentT
   )
 }
 
-export const getObjectBytes = async (key: string) => {
+/** Abre el archivo como stream: no lo carga entero en memoria. */
+export const getObjectStream = async (key: string) => {
   const result = await getClient().send(new GetObjectCommand({ Bucket: getBucket(), Key: key }))
 
   if (!result.Body) {
     throw new Error(`No se encontro el archivo ${key}.`)
   }
 
-  return result.Body.transformToByteArray()
+  return {
+    stream: result.Body.transformToWebStream() as ReadableStream<Uint8Array>,
+    size: result.ContentLength,
+    lastModified: result.LastModified,
+  }
 }
 
 export const getObjectText = async (key: string) => {

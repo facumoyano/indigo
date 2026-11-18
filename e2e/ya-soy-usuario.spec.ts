@@ -161,7 +161,7 @@ test("el formulario sube los archivos y el link del mail los entrega intactos", 
     const section = page.locator("div.rounded-3xl", { has: page.getByRole("heading", { name: "Fotos faciales" }) })
     const [download] = await Promise.all([
       page.waitForEvent("download"),
-      section.getByRole("button", { name: "Descargar seccion" }).click(),
+      section.getByRole("link", { name: "Descargar seccion" }).click(),
     ])
     const zip = await JSZip.loadAsync(await readDownload(download))
     for (const fixture of fixtures.filter((item) => item.section === "facialPhotos")) {
@@ -174,7 +174,7 @@ test("el formulario sube los archivos y el link del mail los entrega intactos", 
   await test.step("descargar el caso completo como ZIP y comparar el contenido", async () => {
     const [download] = await Promise.all([
       page.waitForEvent("download", { timeout: 4 * 60 * 1000 }),
-      page.getByRole("button", { name: "Descargar caso completo" }).click(),
+      page.getByRole("link", { name: "Descargar caso completo" }).click(),
     ])
     const zip = await JSZip.loadAsync(await readDownload(download))
     for (const fixture of fixtures) {

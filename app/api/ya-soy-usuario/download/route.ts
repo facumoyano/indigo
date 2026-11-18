@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from "next/server"
-import JSZip from "jszip"
+import { makeZip } from "client-zip"
 
-import { createDownloadUrl, getObjectBytes } from "@/lib/storage"
+import { createDownloadUrl, getObjectStream } from "@/lib/storage"
 import {
   getYaSoyUsuarioManifest,
   verifyYaSoyUsuarioDownloadToken,
   type YaSoyUsuarioManifestSection,
 } from "@/lib/ya-soy-usuario-downloads"
+
+/** Un ZIP de un caso grande puede tardar lo que tarde la conexion del que descarga. */
+export const maxDuration = 300
 
 const buildContentDisposition = (filename: string) => {
   const sanitizedFilename = filename.replace(/[\r\n"]/g, "_")
@@ -18,29 +21,34 @@ const sanitizeFileName = (filename: string, fallback: string) => {
   return trimmed.length > 0 ? trimmed : fallback
 }
 
-const addSectionToZip = async (zip: JSZip, section: YaSoyUsuarioManifestSection) => {
-  for (const [index, file] of section.files.entries()) {
-    const bytes = await getObjectBytes(file.key).catch(() => {
-      throw new Error(`No pudimos descargar ${file.name}.`)
-    })
-    zip.file(sanitizeFileName(file.name, `${section.key}-${index + 1}`), bytes)
-  }
-}
+/**
+ * Arma el ZIP en streaming: cada archivo se abre en R2 recien cuando le toca y se reenvia
+ * de a pedazos, asi la memoria no depende del tamano del caso.
+ */
+const zipResponse = (sections: YaSoyUsuarioManifestSection[], filename: string, withFolders: boolean) => {
+  async function* entries() {
+    for (const section of sections) {
+      for (const [index, file] of section.files.entries()) {
+        const name = sanitizeFileName(file.name, `${section.key}-${index + 1}`)
+        const object = await getObjectStream(file.key)
 
-const zipResponse = async (zip: JSZip, filename: string) => {
-  const content = await zip.generateAsync({ type: "nodebuffer" })
-  const body = new Uint8Array(content)
-
-  return {
-    bytes: body.byteLength,
-    response: new NextResponse(body, {
-      headers: {
-        "Content-Type": "application/zip",
-        "Content-Disposition": buildContentDisposition(filename),
-        "Cache-Control": "private, no-store, max-age=0",
-      },
-    }),
+        yield {
+          name: withFolders ? `${section.label}/${name}` : name,
+          input: object.stream,
+          size: object.size,
+          lastModified: object.lastModified,
+        }
+      }
+    }
   }
+
+  return new NextResponse(makeZip(entries()), {
+    headers: {
+      "Content-Type": "application/zip",
+      "Content-Disposition": buildContentDisposition(filename),
+      "Cache-Control": "private, no-store, max-age=0",
+    },
+  })
 }
 
 export async function GET(req: NextRequest) {
@@ -64,26 +72,7 @@ export async function GET(req: NextRequest) {
     const manifest = await getYaSoyUsuarioManifest(manifestPath)
 
     if (!sectionKey) {
-      const zip = new JSZip()
-
-      for (const section of manifest.sections) {
-        if (section.files.length === 0) continue
-
-        const folder = zip.folder(section.label)
-        if (!folder) continue
-
-        await addSectionToZip(folder, section)
-      }
-
-      const { bytes, response } = await zipResponse(zip, `caso-${manifest.patientFullName || "archivos"}.zip`)
-
-      console.info("[ya-soy-usuario/download] complete-case", {
-        sections: manifest.sections.length,
-        bytes,
-        durationMs: Date.now() - startedAt,
-      })
-
-      return response
+      return zipResponse(manifest.sections, `caso-${manifest.patientFullName || "archivos"}.zip`, true)
     }
 
     const section = manifest.sections.find((item) => item.key === sectionKey)
@@ -97,19 +86,7 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: "La seccion no tiene archivos." }, { status: 404 })
       }
 
-      const zip = new JSZip()
-      await addSectionToZip(zip, section)
-
-      const { bytes, response } = await zipResponse(zip, `${section.key}.zip`)
-
-      console.info("[ya-soy-usuario/download] complete-section", {
-        sectionKey,
-        files: section.files.length,
-        bytes,
-        durationMs: Date.now() - startedAt,
-      })
-
-      return response
+      return zipResponse([section], `${section.key}.zip`, false)
     }
 
     const fileIndex = Number(fileIndexValue)

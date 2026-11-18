@@ -1,6 +1,5 @@
 import NavbarDesktop from '@/components/navbar-desktop'
 import NavbarMobile from '@/components/navbar-mobile'
-import DownloadButton from "@/components/download-button"
 
 import {
   getYaSoyUsuarioManifest,
@@ -61,12 +60,12 @@ const YaSoyUsuarioArchivosPage = async ({ searchParams }: PageProps) => {
                   <p className="text-lg font-bold text-blue-custom">Descarga completa</p>
                   <p className="text-sm md:text-base">Descarga todos los archivos del caso en un unico .zip.</p>
                 </div>
-                <DownloadButton
+                <a
                   href={`/api/ya-soy-usuario/download?token=${encodeURIComponent(token)}`}
-                  idleLabel="Descargar caso completo"
-                  loadingLabel="Preparando caso completo..."
-                  className="inline-flex items-center justify-center rounded-lg border border-blue-custom px-4 py-2 text-sm font-medium text-blue-custom transition-colors hover:bg-blue-custom/10 disabled:opacity-70"
-                />
+                  className="inline-flex items-center justify-center rounded-lg border border-blue-custom px-4 py-2 text-sm font-medium text-blue-custom transition-colors hover:bg-blue-custom/10"
+                >
+                  Descargar caso completo
+                </a>
               </div>
 
               <div className="space-y-4">
@@ -80,12 +79,12 @@ const YaSoyUsuarioArchivosPage = async ({ searchParams }: PageProps) => {
                         </p>
                       </div>
                       {section.files.length > 0 ? (
-                        <DownloadButton
+                        <a
                           href={`/api/ya-soy-usuario/download?token=${encodeURIComponent(token)}&section=${section.key}`}
-                          idleLabel="Descargar seccion"
-                          loadingLabel="Preparando seccion..."
-                          className="inline-flex items-center justify-center rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-text transition-colors hover:bg-gray-100 disabled:opacity-70"
-                        />
+                          className="inline-flex items-center justify-center rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-text transition-colors hover:bg-gray-100"
+                        >
+                          Descargar seccion
+                        </a>
                       ) : null}
                     </div>
 
