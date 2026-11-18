@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from "next/server"
-import { get } from "@vercel/blob"
-import JSZip from "jszip"
+import { makeZip } from "client-zip"
 
+import { createDownloadUrl, getObjectStream } from "@/lib/storage"
 import {
   getYaSoyUsuarioManifest,
   verifyYaSoyUsuarioDownloadToken,
+  type YaSoyUsuarioManifestSection,
 } from "@/lib/ya-soy-usuario-downloads"
+
+/** Un ZIP de un caso grande puede tardar lo que tarde la conexion del que descarga. */
+export const maxDuration = 300
 
 const buildContentDisposition = (filename: string) => {
   const sanitizedFilename = filename.replace(/[\r\n"]/g, "_")
@@ -15,6 +19,36 @@ const buildContentDisposition = (filename: string) => {
 const sanitizeFileName = (filename: string, fallback: string) => {
   const trimmed = filename.trim()
   return trimmed.length > 0 ? trimmed : fallback
+}
+
+/**
+ * Arma el ZIP en streaming: cada archivo se abre en R2 recien cuando le toca y se reenvia
+ * de a pedazos, asi la memoria no depende del tamano del caso.
+ */
+const zipResponse = (sections: YaSoyUsuarioManifestSection[], filename: string, withFolders: boolean) => {
+  async function* entries() {
+    for (const section of sections) {
+      for (const [index, file] of section.files.entries()) {
+        const name = sanitizeFileName(file.name, `${section.key}-${index + 1}`)
+        const object = await getObjectStream(file.key)
+
+        yield {
+          name: withFolders ? `${section.label}/${name}` : name,
+          input: object.stream,
+          size: object.size,
+          lastModified: object.lastModified,
+        }
+      }
+    }
+  }
+
+  return new NextResponse(makeZip(entries()), {
+    headers: {
+      "Content-Type": "application/zip",
+      "Content-Disposition": buildContentDisposition(filename),
+      "Cache-Control": "private, no-store, max-age=0",
+    },
+  })
 }
 
 export async function GET(req: NextRequest) {
@@ -38,44 +72,7 @@ export async function GET(req: NextRequest) {
     const manifest = await getYaSoyUsuarioManifest(manifestPath)
 
     if (!sectionKey) {
-      const zip = new JSZip()
-
-      for (const section of manifest.sections) {
-        if (section.files.length === 0) continue
-
-        const folder = zip.folder(section.label)
-        if (!folder) continue
-
-        for (const [index, file] of section.files.entries()) {
-          const blob = await get(file.url, { access: "private", useCache: false })
-
-          if (!blob || blob.statusCode !== 200) {
-            return NextResponse.json({ error: `No pudimos descargar ${file.name}.` }, { status: 404 })
-          }
-
-          const arrayBuffer = await new Response(blob.stream).arrayBuffer()
-          const fallbackName = `${section.key}-${index + 1}`
-          folder.file(sanitizeFileName(file.name, fallbackName), arrayBuffer)
-        }
-      }
-
-      const content = await zip.generateAsync({ type: "nodebuffer" })
-      const body = new Uint8Array(content)
-      const zipFilename = `caso-${manifest.patientFullName || "archivos"}.zip`
-
-      console.info("[ya-soy-usuario/download] complete-case", {
-        sections: manifest.sections.length,
-        bytes: body.byteLength,
-        durationMs: Date.now() - startedAt,
-      })
-
-      return new NextResponse(body, {
-        headers: {
-          "Content-Type": "application/zip",
-          "Content-Disposition": buildContentDisposition(zipFilename),
-          "Cache-Control": "private, no-store, max-age=0",
-        },
-      })
+      return zipResponse(manifest.sections, `caso-${manifest.patientFullName || "archivos"}.zip`, true)
     }
 
     const section = manifest.sections.find((item) => item.key === sectionKey)
@@ -89,38 +86,7 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ error: "La seccion no tiene archivos." }, { status: 404 })
       }
 
-      const zip = new JSZip()
-
-      for (const [index, file] of section.files.entries()) {
-        const blob = await get(file.url, { access: "private", useCache: false })
-
-        if (!blob || blob.statusCode !== 200) {
-          return NextResponse.json({ error: `No pudimos descargar ${file.name}.` }, { status: 404 })
-        }
-
-        const arrayBuffer = await new Response(blob.stream).arrayBuffer()
-        const fallbackName = `${section.key}-${index + 1}`
-        zip.file(sanitizeFileName(file.name, fallbackName), arrayBuffer)
-      }
-
-      const content = await zip.generateAsync({ type: "nodebuffer" })
-      const body = new Uint8Array(content)
-      const zipFilename = `${section.key}.zip`
-
-      console.info("[ya-soy-usuario/download] complete-section", {
-        sectionKey,
-        files: section.files.length,
-        bytes: body.byteLength,
-        durationMs: Date.now() - startedAt,
-      })
-
-      return new NextResponse(body, {
-        headers: {
-          "Content-Type": "application/zip",
-          "Content-Disposition": buildContentDisposition(zipFilename),
-          "Cache-Control": "private, no-store, max-age=0",
-        },
-      })
+      return zipResponse([section], `${section.key}.zip`, false)
     }
 
     const fileIndex = Number(fileIndexValue)
@@ -134,25 +100,19 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Archivo no encontrado." }, { status: 404 })
     }
 
-    const blob = await get(file.url, { access: "private", useCache: false })
+    // El archivo baja directo del bucket: no pasa por la funcion ni consume su ancho de banda.
+    const downloadUrl = await createDownloadUrl(file.key, buildContentDisposition(file.name))
 
-    if (!blob || blob.statusCode !== 200) {
-      return NextResponse.json({ error: "No pudimos descargar el archivo." }, { status: 404 })
-    }
-
-    console.info("[ya-soy-usuario/download] complete-file", {
+    console.info("[ya-soy-usuario/download] redirect-file", {
       sectionKey,
       fileIndex,
       fileName: file.name,
       durationMs: Date.now() - startedAt,
     })
 
-    return new NextResponse(blob.stream, {
-      headers: {
-        "Content-Type": blob.blob.contentType || "application/octet-stream",
-        "Content-Disposition": buildContentDisposition(file.name),
-        "Cache-Control": "private, no-store, max-age=0",
-      },
+    return NextResponse.redirect(downloadUrl, {
+      status: 302,
+      headers: { "Cache-Control": "private, no-store, max-age=0" },
     })
   } catch (error) {
     console.error("[ya-soy-usuario/download] error", {

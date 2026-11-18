@@ -1,13 +1,12 @@
 const megabyte = 1024 * 1024
-const gigabyte = megabyte * 1024
 
 export const yaSoyUsuarioFileConstraints = {
-  facialPhotos: { maxCount: 5, maxSizeBytes: 100 * megabyte, maxSizeLabel: "100 MB" },
-  intraoralPhotos: { maxCount: 10, maxSizeBytes: 100 * megabyte, maxSizeLabel: "100 MB" },
-  lateralTeleradiography: { maxCount: 1, maxSizeBytes: gigabyte, maxSizeLabel: "1 GB" },
-  orthopantomography: { maxCount: 1, maxSizeBytes: 10 * gigabyte, maxSizeLabel: "10 GB" },
-  cbct: { maxCount: 1, maxSizeBytes: gigabyte, maxSizeLabel: "1 GB" },
-  intraoralScan: { maxCount: 5, maxSizeBytes: gigabyte, maxSizeLabel: "1 GB" },
+  facialPhotos: { maxCount: 5, maxSizeBytes: 20 * megabyte, maxSizeLabel: "20 MB" },
+  intraoralPhotos: { maxCount: 10, maxSizeBytes: 20 * megabyte, maxSizeLabel: "20 MB" },
+  lateralTeleradiography: { maxCount: 1, maxSizeBytes: 50 * megabyte, maxSizeLabel: "50 MB" },
+  orthopantomography: { maxCount: 1, maxSizeBytes: 50 * megabyte, maxSizeLabel: "50 MB" },
+  cbct: { maxCount: 1, maxSizeBytes: 500 * megabyte, maxSizeLabel: "500 MB" },
+  intraoralScan: { maxCount: 5, maxSizeBytes: 200 * megabyte, maxSizeLabel: "200 MB" },
 } as const
 
 export type YaSoyUsuarioFileFieldName = keyof typeof yaSoyUsuarioFileConstraints
