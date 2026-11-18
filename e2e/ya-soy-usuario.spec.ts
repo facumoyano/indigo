@@ -19,12 +19,26 @@ const MB = 1024 * 1024
 
 type Fixture = { section: string; name: string; bytes: Buffer }
 
+/** E2E_LARGE=1 simula un caso real pesado (~500 MB) para probar los ZIP en Vercel. */
+const cbctSize = process.env.E2E_LARGE === "1" ? 480 * MB : 60 * MB
+
+/** Los Previews de Vercel estan protegidos: este secreto deja pasar a la prueba sin login. */
+const bypassSecret = process.env.VERCEL_AUTOMATION_BYPASS_SECRET
+const bypassHeaders: Record<string, string> = bypassSecret ? { "x-vercel-protection-bypass": bypassSecret } : {}
+
+test.beforeEach(async ({ page }) => {
+  if (!bypassSecret) return
+  // Deja una cookie de bypass en el dominio del Preview. No usamos un header global porque
+  // tambien viajaria en las subidas a R2 y el CORS del bucket lo rechazaria.
+  await page.goto(`/?x-vercel-protection-bypass=${bypassSecret}&x-vercel-set-bypass-cookie=true`)
+})
+
 const buildFixtures = (): Fixture[] => [
   { section: "facialPhotos", name: "Foto frontal ñandú.jpg", bytes: randomBytes(1 * MB) },
   { section: "facialPhotos", name: "perfil con sonrisa.png", bytes: randomBytes(512 * 1024) },
   { section: "intraoralPhotos", name: "oclusal superior.jpeg", bytes: randomBytes(2 * MB) },
   { section: "orthopantomography", name: "Panorámica (2026).jpg", bytes: randomBytes(3 * MB) },
-  { section: "cbct", name: "CBCT paciente final.zip", bytes: randomBytes(60 * MB) },
+  { section: "cbct", name: "CBCT paciente final.zip", bytes: randomBytes(cbctSize) },
   { section: "intraoralScan", name: "maxilar superior.stl", bytes: randomBytes(5 * MB) },
 ]
 
@@ -102,7 +116,12 @@ test("el formulario sube los archivos y el link del mail los entrega intactos", 
     await page.goto("/ya-soy-usuario-indigo")
     await fillForm(page, marker, filesBySection)
     await page.getByRole("button", { name: "Enviar" }).click()
-    await expect(page.getByText("¡Gracias! Recibimos la información del caso.")).toBeVisible({ timeout: 4 * 60 * 1000 })
+    const success = page.getByText("¡Gracias! Recibimos la información del caso.")
+    const failure = page.locator("p.text-red-500")
+    await expect(success.or(failure)).toBeVisible({ timeout: 4 * 60 * 1000 })
+    if (await failure.isVisible()) {
+      throw new Error(`El formulario mostro un error: ${await failure.textContent()}`)
+    }
   })
 
   const email = await test.step("recibir el mail de Indigo (desviado a la casilla de prueba)", async () => {
@@ -176,6 +195,7 @@ test("el formulario sube los archivos y el link del mail los entrega intactos", 
 
 test("el servidor rechaza archivos mas grandes que el limite de su seccion", async ({ request }) => {
   const response = await request.post("/api/upload", {
+    headers: bypassHeaders,
     data: { section: "facialPhotos", fileName: "enorme.jpg", contentType: "image/jpeg", size: 21 * MB },
   })
   expect(response.status()).toBe(400)
@@ -184,6 +204,7 @@ test("el servidor rechaza archivos mas grandes que el limite de su seccion", asy
 
 test("el servidor rechaza secciones inventadas", async ({ request }) => {
   const response = await request.post("/api/upload", {
+    headers: bypassHeaders,
     data: { section: "manifests", fileName: "x.json", contentType: "application/json", size: 10 },
   })
   expect(response.status()).toBe(400)
