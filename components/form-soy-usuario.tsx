@@ -917,9 +917,12 @@ planificar el tratamiento del paciente.</FormLabel>
                         </div>
                         <p className="text-sm text-gray-text">{submitStatus}</p>
                         {uploadProgress && uploadProgress.totalBytes > 0 ? (
-                            <div className="w-full max-w-xs space-y-2" data-testid="upload-progress">
+                            <div className="w-full max-w-sm space-y-3" data-testid="upload-progress">
+                                <p className="text-center text-3xl font-bold text-blue-custom">
+                                    {Math.floor((uploadProgress.loadedBytes / uploadProgress.totalBytes) * 100)}%
+                                </p>
                                 <div
-                                    className="h-2 w-full overflow-hidden rounded-full bg-gray-200"
+                                    className="h-3 w-full overflow-hidden rounded-full bg-gray-200"
                                     role="progressbar"
                                     aria-valuemin={0}
                                     aria-valuemax={100}
@@ -930,10 +933,10 @@ planificar el tratamiento del paciente.</FormLabel>
                                         style={{ width: `${(uploadProgress.loadedBytes / uploadProgress.totalBytes) * 100}%` }}
                                     />
                                 </div>
-                                <p className="text-center text-sm text-gray-text">
-                                    {Math.floor((uploadProgress.loadedBytes / uploadProgress.totalBytes) * 100)}% ({formatMegabytes(uploadProgress.loadedBytes)} de {formatMegabytes(uploadProgress.totalBytes)})
+                                <p className="text-center text-base text-gray-text">
+                                    {formatMegabytes(uploadProgress.loadedBytes)} de {formatMegabytes(uploadProgress.totalBytes)}
                                 </p>
-                                <p className="text-center text-xs text-gray-text">No cierres esta página hasta que termine.</p>
+                                <p className="text-center text-sm font-medium text-gray-text">No cierres esta página hasta que termine.</p>
                             </div>
                         ) : null}
                     </DialogContent>
