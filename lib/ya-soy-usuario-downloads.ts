@@ -1,14 +1,14 @@
-import { get, put } from "@vercel/blob"
 import { createHmac, randomUUID, timingSafeEqual } from "node:crypto"
 
 import { yaSoyUsuarioFileSections } from "@/lib/forms/ya-soy-usuario-schema"
+import { getObjectText, putObject } from "@/lib/storage"
 
-type UploadedFile = { name: string; url: string }
+export type YaSoyUsuarioStoredFile = { name: string; key: string }
 
 export type YaSoyUsuarioManifestSection = {
   key: (typeof yaSoyUsuarioFileSections)[number]["key"]
   label: string
-  files: UploadedFile[]
+  files: YaSoyUsuarioStoredFile[]
 }
 
 export type YaSoyUsuarioManifest = {
@@ -41,14 +41,21 @@ const signValue = (value: string) => createHmac("sha256", getDownloadSecret()).u
 export const createYaSoyUsuarioManifest = async (manifest: YaSoyUsuarioManifest) => {
   const pathname = `ya-soy-usuario/manifests/${Date.now()}-${randomUUID()}.json`
 
-  return put(pathname, JSON.stringify(manifest), {
-    access: "private",
-    contentType: "application/json",
-    addRandomSuffix: false,
-  })
+  await putObject(pathname, JSON.stringify(manifest), "application/json")
+
+  return { pathname }
 }
 
-export const createYaSoyUsuarioDownloadToken = (manifestPath: string, expiresInHours = 168) => {
+/**
+ * Vigencia del link de descarga. Los archivos los borra una regla de ciclo de vida del
+ * bucket de R2 a los 8 dias (un dia de margen): si cambias este valor, ajusta esa regla.
+ */
+export const YA_SOY_USUARIO_RETENTION_HOURS = 168
+
+export const createYaSoyUsuarioDownloadToken = (
+  manifestPath: string,
+  expiresInHours = YA_SOY_USUARIO_RETENTION_HOURS
+) => {
   const payload: DownloadTokenPayload = {
     manifestPath,
     exp: Date.now() + expiresInHours * 60 * 60 * 1000,
@@ -92,11 +99,9 @@ export const verifyYaSoyUsuarioDownloadToken = (token: string) => {
 }
 
 export const getYaSoyUsuarioManifest = async (manifestPath: string) => {
-  const result = await get(manifestPath, { access: "private", useCache: false })
-
-  if (!result || result.statusCode !== 200) {
+  try {
+    return JSON.parse(await getObjectText(manifestPath)) as YaSoyUsuarioManifest
+  } catch {
     throw new Error("No pudimos recuperar los archivos del caso.")
   }
-
-  return (await new Response(result.stream).json()) as YaSoyUsuarioManifest
 }

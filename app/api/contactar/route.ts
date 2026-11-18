@@ -3,7 +3,7 @@ import { ZodError } from "zod"
 
 import { contactFormSchema } from "@/lib/forms/contact-form-schema"
 import { alignerOptions, discoveryOptions } from "@/lib/forms/options"
-import { getRecipientEmail, getResendClient, getSenderEmail } from "@/lib/email/resend"
+import { getRecipientEmail, getResendClient, getSenderEmail, routeEmail } from "@/lib/email/resend"
 import { getContactAutoResponseHtml } from "@/lib/email/templates/contact-auto-response"
 import { escapeHtml } from "@/lib/utils"
 import { sendErrorNotification } from "@/lib/email/error-notification"
@@ -38,21 +38,21 @@ export async function POST(req: NextRequest) {
       ${data.companyPartners ? `<p><strong>Empresas con las que trabaja:</strong> ${escapeHtml(data.companyPartners)}</p>` : ""}
     `
 
-    await resend.emails.send({
+    await resend.emails.send(routeEmail({
       from,
       to,
       replyTo,
       subject: "Nuevo formulario de contacto Indigo",
       html,
-    })
+    }))
 
-    await resend.emails.send({
+    await resend.emails.send(routeEmail({
       from,
       to: data.email,
       replyTo: from,
       subject: "Gracias por contactarte con Indigo",
       html: getContactAutoResponseHtml(data.fullName),
-    })
+    }))
 
     return NextResponse.json({ success: true })
   } catch (error) {

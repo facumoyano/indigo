@@ -94,12 +94,12 @@ const YaSoyUsuarioArchivosPage = async ({ searchParams }: PageProps) => {
                         {section.files.map((file, index) => (
                           <li key={`${section.key}-${file.name}-${index}`} className="flex flex-col gap-3 rounded-2xl bg-gray-100 px-4 py-3 md:flex-row md:items-center md:justify-between">
                             <span className="min-w-0 truncate text-sm md:text-base text-gray-text">{file.name}</span>
-                            <DownloadButton
+                            <a
                               href={`/api/ya-soy-usuario/download?token=${encodeURIComponent(token)}&section=${section.key}&file=${index}`}
-                              idleLabel="Descargar archivo"
-                              loadingLabel="Descargando..."
-                              className="inline-flex items-center justify-center rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-text transition-colors hover:bg-white disabled:opacity-70"
-                            />
+                              className="inline-flex items-center justify-center rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-text transition-colors hover:bg-white"
+                            >
+                              Descargar archivo
+                            </a>
                           </li>
                         ))}
                       </ul>

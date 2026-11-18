@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
-import { get } from "@vercel/blob"
 import JSZip from "jszip"
 
+import { createDownloadUrl, getObjectBytes } from "@/lib/storage"
 import {
   getYaSoyUsuarioManifest,
   verifyYaSoyUsuarioDownloadToken,
+  type YaSoyUsuarioManifestSection,
 } from "@/lib/ya-soy-usuario-downloads"
 
 const buildContentDisposition = (filename: string) => {
@@ -15,6 +16,31 @@ const buildContentDisposition = (filename: string) => {
 const sanitizeFileName = (filename: string, fallback: string) => {
   const trimmed = filename.trim()
   return trimmed.length > 0 ? trimmed : fallback
+}
+
+const addSectionToZip = async (zip: JSZip, section: YaSoyUsuarioManifestSection) => {
+  for (const [index, file] of section.files.entries()) {
+    const bytes = await getObjectBytes(file.key).catch(() => {
+      throw new Error(`No pudimos descargar ${file.name}.`)
+    })
+    zip.file(sanitizeFileName(file.name, `${section.key}-${index + 1}`), bytes)
+  }
+}
+
+const zipResponse = async (zip: JSZip, filename: string) => {
+  const content = await zip.generateAsync({ type: "nodebuffer" })
+  const body = new Uint8Array(content)
+
+  return {
+    bytes: body.byteLength,
+    response: new NextResponse(body, {
+      headers: {
+        "Content-Type": "application/zip",
+        "Content-Disposition": buildContentDisposition(filename),
+        "Cache-Control": "private, no-store, max-age=0",
+      },
+    }),
+  }
 }
 
 export async function GET(req: NextRequest) {
@@ -46,36 +72,18 @@ export async function GET(req: NextRequest) {
         const folder = zip.folder(section.label)
         if (!folder) continue
 
-        for (const [index, file] of section.files.entries()) {
-          const blob = await get(file.url, { access: "private", useCache: false })
-
-          if (!blob || blob.statusCode !== 200) {
-            return NextResponse.json({ error: `No pudimos descargar ${file.name}.` }, { status: 404 })
-          }
-
-          const arrayBuffer = await new Response(blob.stream).arrayBuffer()
-          const fallbackName = `${section.key}-${index + 1}`
-          folder.file(sanitizeFileName(file.name, fallbackName), arrayBuffer)
-        }
+        await addSectionToZip(folder, section)
       }
 
-      const content = await zip.generateAsync({ type: "nodebuffer" })
-      const body = new Uint8Array(content)
-      const zipFilename = `caso-${manifest.patientFullName || "archivos"}.zip`
+      const { bytes, response } = await zipResponse(zip, `caso-${manifest.patientFullName || "archivos"}.zip`)
 
       console.info("[ya-soy-usuario/download] complete-case", {
         sections: manifest.sections.length,
-        bytes: body.byteLength,
+        bytes,
         durationMs: Date.now() - startedAt,
       })
 
-      return new NextResponse(body, {
-        headers: {
-          "Content-Type": "application/zip",
-          "Content-Disposition": buildContentDisposition(zipFilename),
-          "Cache-Control": "private, no-store, max-age=0",
-        },
-      })
+      return response
     }
 
     const section = manifest.sections.find((item) => item.key === sectionKey)
@@ -90,37 +98,18 @@ export async function GET(req: NextRequest) {
       }
 
       const zip = new JSZip()
+      await addSectionToZip(zip, section)
 
-      for (const [index, file] of section.files.entries()) {
-        const blob = await get(file.url, { access: "private", useCache: false })
-
-        if (!blob || blob.statusCode !== 200) {
-          return NextResponse.json({ error: `No pudimos descargar ${file.name}.` }, { status: 404 })
-        }
-
-        const arrayBuffer = await new Response(blob.stream).arrayBuffer()
-        const fallbackName = `${section.key}-${index + 1}`
-        zip.file(sanitizeFileName(file.name, fallbackName), arrayBuffer)
-      }
-
-      const content = await zip.generateAsync({ type: "nodebuffer" })
-      const body = new Uint8Array(content)
-      const zipFilename = `${section.key}.zip`
+      const { bytes, response } = await zipResponse(zip, `${section.key}.zip`)
 
       console.info("[ya-soy-usuario/download] complete-section", {
         sectionKey,
         files: section.files.length,
-        bytes: body.byteLength,
+        bytes,
         durationMs: Date.now() - startedAt,
       })
 
-      return new NextResponse(body, {
-        headers: {
-          "Content-Type": "application/zip",
-          "Content-Disposition": buildContentDisposition(zipFilename),
-          "Cache-Control": "private, no-store, max-age=0",
-        },
-      })
+      return response
     }
 
     const fileIndex = Number(fileIndexValue)
@@ -134,25 +123,19 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Archivo no encontrado." }, { status: 404 })
     }
 
-    const blob = await get(file.url, { access: "private", useCache: false })
+    // El archivo baja directo del bucket: no pasa por la funcion ni consume su ancho de banda.
+    const downloadUrl = await createDownloadUrl(file.key, buildContentDisposition(file.name))
 
-    if (!blob || blob.statusCode !== 200) {
-      return NextResponse.json({ error: "No pudimos descargar el archivo." }, { status: 404 })
-    }
-
-    console.info("[ya-soy-usuario/download] complete-file", {
+    console.info("[ya-soy-usuario/download] redirect-file", {
       sectionKey,
       fileIndex,
       fileName: file.name,
       durationMs: Date.now() - startedAt,
     })
 
-    return new NextResponse(blob.stream, {
-      headers: {
-        "Content-Type": blob.blob.contentType || "application/octet-stream",
-        "Content-Disposition": buildContentDisposition(file.name),
-        "Cache-Control": "private, no-store, max-age=0",
-      },
+    return NextResponse.redirect(downloadUrl, {
+      status: 302,
+      headers: { "Cache-Control": "private, no-store, max-age=0" },
     })
   } catch (error) {
     console.error("[ya-soy-usuario/download] error", {

@@ -22,3 +22,14 @@ const indigoSenderEmail = "Indigo <contacto@email.sonrisasindigo.com.ar>"
 export const getRecipientEmail = () => notificationRecipients
 
 export const getSenderEmail = () => indigoSenderEmail
+
+/**
+ * En pruebas, EMAIL_TEST_RECIPIENT desvia todos los mails a una sola casilla para no
+ * escribirle a Indigo ni a profesionales reales. En produccion no se define.
+ */
+export const routeEmail = <T extends { to: string | string[]; subject: string }>(email: T): T => {
+  const testRecipient = process.env.EMAIL_TEST_RECIPIENT
+  if (!testRecipient) return email
+
+  return { ...email, to: testRecipient, subject: `[PRUEBA] ${email.subject}` }
+}

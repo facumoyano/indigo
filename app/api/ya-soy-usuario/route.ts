@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
 import { ZodError } from "zod"
-import { del } from "@vercel/blob"
 
 import {
   yaSoyUsuarioFileSections,
@@ -17,17 +16,20 @@ import {
   upperCrowdingOptions,
   yesNoOptions,
 } from "@/lib/forms/options"
-import { getRecipientEmail, getResendClient, getSenderEmail } from "@/lib/email/resend"
+import { getRecipientEmail, getResendClient, getSenderEmail, routeEmail } from "@/lib/email/resend"
 import { escapeHtml } from "@/lib/utils"
 import { getYaSoyUsuarioAutoResponseHtml } from "@/lib/email/templates/ya-soy-usuario-auto-response"
 import { sendErrorNotification } from "@/lib/email/error-notification"
+import { deleteObjects } from "@/lib/storage"
 import {
   createYaSoyUsuarioDownloadToken,
   createYaSoyUsuarioManifest,
+  YA_SOY_USUARIO_RETENTION_HOURS,
+  type YaSoyUsuarioStoredFile,
 } from "@/lib/ya-soy-usuario-downloads"
+import { isYaSoyUsuarioKeyForSection } from "@/lib/ya-soy-usuario-storage-keys"
 
-type UploadedFile = { name: string; url: string }
-type FileUrls = Record<string, UploadedFile[]>
+type UploadedFiles = Partial<Record<(typeof yaSoyUsuarioFileSections)[number]["key"], YaSoyUsuarioStoredFile[]>>
 
 const optionLabel = (value: string | undefined, options: { value: string; label: string }[]) => {
   if (!value) return "-"
@@ -41,30 +43,51 @@ const getOptional = (formData: FormData, key: string) => {
   return value.toString()
 }
 
-const cleanupBlobFiles = async (fileUrls: FileUrls, extraUrls: string[] = []) => {
-  const urls = [...Object.values(fileUrls).flat().map((f) => f.url), ...extraUrls]
-  if (urls.length > 0) {
-    await del(urls).catch(() => {})
+/** Solo acepta archivos con nombre y con una clave de su propia seccion; descarta el resto. */
+const parseUploadedFiles = (raw: string): UploadedFiles => {
+  const parsed: unknown = JSON.parse(raw || "{}")
+  if (!parsed || typeof parsed !== "object") return {}
+
+  const record = parsed as Record<string, unknown>
+
+  return Object.fromEntries(
+    yaSoyUsuarioFileSections.map((section) => {
+      const files = Array.isArray(record[section.key]) ? (record[section.key] as unknown[]) : []
+      const valid = files.flatMap((file) => {
+        const { name, key } = (file ?? {}) as { name?: unknown; key?: unknown }
+        return typeof name === "string" && isYaSoyUsuarioKeyForSection(key, section.key)
+          ? [{ name, key: key as string }]
+          : []
+      })
+      return [section.key, valid]
+    })
+  )
+}
+
+const cleanupStoredFiles = async (uploadedFiles: UploadedFiles, extraKeys: string[] = []) => {
+  const keys = [...Object.values(uploadedFiles).flat().map((f) => f.key), ...extraKeys]
+  if (keys.length > 0) {
+    await deleteObjects(keys).catch(() => {})
   }
 }
 
 export async function POST(req: NextRequest) {
-  let fileUrls: FileUrls = {}
+  let uploadedFiles: UploadedFiles = {}
   let rawFormData: Record<string, unknown> = {}
-  let manifestUrl: string | null = null
+  let manifestKey: string | null = null
 
   try {
     const formData = await req.formData()
 
-    fileUrls = JSON.parse(getString(formData, "fileUrls") || "{}")
+    uploadedFiles = parseUploadedFiles(getString(formData, "uploadedFiles"))
 
     // Capture raw form data for error notifications
     for (const [key, value] of formData.entries()) {
-      if (key === "fileUrls") continue
+      if (key === "uploadedFiles") continue
       rawFormData[key] = typeof value === "string" ? value : `[File: ${value.name}]`
     }
-    rawFormData.fileUrls = Object.fromEntries(
-      Object.entries(fileUrls).map(([k, v]) => [k, v.map((f) => f.name)])
+    rawFormData.uploadedFiles = Object.fromEntries(
+      Object.entries(uploadedFiles).map(([k, v]) => [k, v.map((f) => f.name)])
     )
 
     const parsedData = yaSoyUsuarioFormSchema.parse({
@@ -110,17 +133,17 @@ export async function POST(req: NextRequest) {
       sections: yaSoyUsuarioFileSections.map((section) => ({
         key: section.key,
         label: section.label,
-        files: fileUrls[section.key] ?? [],
+        files: uploadedFiles[section.key] ?? [],
       })),
     })
-    manifestUrl = manifest.url
+    manifestKey = manifest.pathname
 
     const downloadToken = createYaSoyUsuarioDownloadToken(manifest.pathname)
     const filesLink = new URL(`/ya-soy-usuario-archivos?token=${encodeURIComponent(downloadToken)}`, req.nextUrl.origin).toString()
 
     const fileSummary = yaSoyUsuarioFileSections
       .map((section) => {
-        const files = fileUrls[section.key] ?? []
+        const files = uploadedFiles[section.key] ?? []
         if (files.length === 0) {
           return `<li>${section.label}: sin archivos</li>`
         }
@@ -164,31 +187,31 @@ export async function POST(req: NextRequest) {
       <h3>Archivos del caso</h3>
       <ul>${fileSummary}</ul>
       <p><a href="${escapeHtml(filesLink)}">Abrir archivos del caso</a></p>
-      <p><em>El link estará disponible durante 7 dias.</em></p>
+      <p><em>El link estará disponible durante ${YA_SOY_USUARIO_RETENTION_HOURS / 24} días.</em></p>
     `
 
     const baseSubject = `Nuevo caso clínico - ${assignedProfessional} - ${parsedData.professionalFullName}`
 
-    await resend.emails.send({
+    await resend.emails.send(routeEmail({
       from,
       to,
       replyTo,
       subject: baseSubject,
       html,
-    })
+    }))
 
     // Auto-response to the professional
-    await resend.emails.send({
+    await resend.emails.send(routeEmail({
       from,
       to: parsedData.professionalEmail,
       replyTo: from,
       subject: `¡Recibimos tu caso correctamente!`,
       html: getYaSoyUsuarioAutoResponseHtml(parsedData.professionalFullName, parsedData.patientFullName),
-    })
+    }))
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    await cleanupBlobFiles(fileUrls, manifestUrl ? [manifestUrl] : [])
+    await cleanupStoredFiles(uploadedFiles, manifestKey ? [manifestKey] : [])
 
     await sendErrorNotification({
       route: "/api/ya-soy-usuario",

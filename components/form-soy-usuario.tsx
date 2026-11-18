@@ -22,7 +22,6 @@ import {
 } from '@/lib/forms/options'
 import { yaSoyUsuarioFileConstraints, type YaSoyUsuarioFileFieldName } from '@/lib/forms/ya-soy-usuario-file-constraints'
 import { yaSoyUsuarioFormSchema, type YaSoyUsuarioFormValues } from '@/lib/forms/ya-soy-usuario-schema'
-import { upload } from '@vercel/blob/client'
 
 const textareaClasses = "min-h-[120px] w-full rounded-md border border-gray-300 bg-transparent px-3 py-2 text-sm md:text-base shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
 
@@ -156,26 +155,45 @@ const FormYaSoyUsuario = () => {
         }
     }
 
-    const uploadFilesToBlob = async (files: File[], section: string): Promise<{ name: string; url: string }[]> => {
+    const uploadFileToStorage = async (file: File, section: string, name: string): Promise<{ name: string; key: string }> => {
+        const contentType = file.type || 'application/octet-stream'
+
+        const signResponse = await fetch('/api/upload', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ section, fileName: name, contentType, size: file.size }),
+        })
+        const signed = await signResponse.json().catch(() => null) as { key?: string; uploadUrl?: string; error?: string } | null
+
+        if (!signResponse.ok || !signed?.key || !signed.uploadUrl) {
+            throw new Error(signed?.error ?? `No pudimos subir ${name}.`)
+        }
+
+        const uploadResponse = await fetch(signed.uploadUrl, {
+            method: 'PUT',
+            headers: { 'Content-Type': contentType },
+            body: file,
+        })
+
+        if (!uploadResponse.ok) {
+            throw new Error(`No pudimos subir ${name}.`)
+        }
+
+        return { name, key: signed.key }
+    }
+
+    const uploadFiles = async (files: File[], section: string): Promise<{ name: string; key: string }[]> => {
         if (files.length === 0) return []
 
-        const results = await Promise.all(
-            files.map(async (file, index) => {
+        return Promise.all(
+            files.map((file, index) => {
                 const safeName = file.name && file.name.trim().length > 0
                     ? file.name
                     : `${section}-${index + 1}`
 
-                const blob = await upload(
-                    `ya-soy-usuario/${section}/${Date.now()}-${safeName}`,
-                    file,
-                    { access: 'private', handleUploadUrl: '/api/upload' }
-                )
-
-                return { name: safeName, url: blob.url }
+                return uploadFileToStorage(file, section, safeName)
             })
         )
-
-        return results
     }
 
     const onSubmit = async (values: YaSoyUsuarioFormValues) => {
@@ -191,13 +209,13 @@ const FormYaSoyUsuario = () => {
             setSubmitStatus('Subiendo archivos...')
             const uploadResults = await Promise.all(
                 fileSections.map((section) =>
-                    uploadFilesToBlob(values[section] ?? [], section)
+                    uploadFiles(values[section] ?? [], section)
                 )
             )
 
-            const fileUrls: Record<string, { name: string; url: string }[]> = {}
+            const uploadedFiles: Record<string, { name: string; key: string }[]> = {}
             fileSections.forEach((section, index) => {
-                fileUrls[section] = uploadResults[index]
+                uploadedFiles[section] = uploadResults[index]
             })
 
             const body = new FormData()
@@ -207,7 +225,7 @@ const FormYaSoyUsuario = () => {
                     body.append(key, String(value))
                 }
             })
-            body.append('fileUrls', JSON.stringify(fileUrls))
+            body.append('uploadedFiles', JSON.stringify(uploadedFiles))
 
             setSubmitStatus('Enviando formulario...')
             const response = await fetch('/api/ya-soy-usuario', {
