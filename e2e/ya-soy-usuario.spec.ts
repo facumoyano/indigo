@@ -116,6 +116,10 @@ test("el formulario sube los archivos y el link del mail los entrega intactos", 
     await page.goto("/ya-soy-usuario-indigo")
     await fillForm(page, marker, filesBySection)
     await page.getByRole("button", { name: "Enviar" }).click()
+    const progress = page.getByTestId("upload-progress")
+    await expect(progress).toBeVisible()
+    await expect(progress).toContainText(/\d+% \([\d.]+ MB de [\d.]+ MB\)/)
+    await expect(progress).toContainText("No cierres esta página")
     const success = page.getByText("¡Gracias! Recibimos la información del caso.")
     const failure = page.locator("p.text-red-500")
     await expect(success.or(failure)).toBeVisible({ timeout: 4 * 60 * 1000 })
@@ -208,4 +212,22 @@ test("el servidor rechaza secciones inventadas", async ({ request }) => {
     data: { section: "manifests", fileName: "x.json", contentType: "application/json", size: 10 },
   })
   expect(response.status()).toBe(400)
+})
+
+test("si se corta la subida a R2, el usuario ve que archivo fallo y que hacer", async ({ page }) => {
+  const workdir = mkdtempSync(path.join(tmpdir(), "indigo-e2e-cut-"))
+  const filePath = path.join(workdir, "CBCT cortado.zip")
+  writeFileSync(filePath, randomBytes(512 * 1024))
+
+  // Simula que se cae internet justo al subir al bucket; el resto de la app responde normal.
+  await page.route(/r2\.cloudflarestorage\.com/, (route) => route.abort("internetdisconnected"))
+
+  await page.goto("/ya-soy-usuario-indigo")
+  await fillForm(page, `Prueba E2E corte ${Date.now()}`, { cbct: [filePath] })
+  await page.getByRole("button", { name: "Enviar" }).click()
+
+  await expect(page.locator("p.text-red-500")).toHaveText(
+    'Se cortó la conexión mientras subíamos "CBCT cortado.zip". Revisá tu internet y volvé a intentar.'
+  )
+  await expect(page.getByTestId("upload-progress")).toBeHidden()
 })

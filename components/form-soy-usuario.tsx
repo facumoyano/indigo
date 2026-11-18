@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Input } from '@/components/ui/input'
 import { useForm } from 'react-hook-form'
@@ -22,6 +22,7 @@ import {
 } from '@/lib/forms/options'
 import { yaSoyUsuarioFileConstraints, type YaSoyUsuarioFileFieldName } from '@/lib/forms/ya-soy-usuario-file-constraints'
 import { yaSoyUsuarioFormSchema, type YaSoyUsuarioFormValues } from '@/lib/forms/ya-soy-usuario-schema'
+import { formatMegabytes, uploadCaseFiles, type UploadProgress } from '@/lib/ya-soy-usuario-upload'
 
 const textareaClasses = "min-h-[120px] w-full rounded-md border border-gray-300 bg-transparent px-3 py-2 text-sm md:text-base shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
 
@@ -84,6 +85,15 @@ const isFileArray = (value: unknown): value is File[] =>
 const FormYaSoyUsuario = () => {
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [submitStatus, setSubmitStatus] = useState('')
+    const [uploadProgress, setUploadProgress] = useState<UploadProgress | null>(null)
+
+    // Cerrar la pestana a mitad de una subida larga pierde todo: el navegador pide confirmacion.
+    useEffect(() => {
+        if (!isSubmitting) return
+        const warn = (event: BeforeUnloadEvent) => event.preventDefault()
+        window.addEventListener('beforeunload', warn)
+        return () => window.removeEventListener('beforeunload', warn)
+    }, [isSubmitting])
     const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
 
     const form = useForm({
@@ -155,47 +165,6 @@ const FormYaSoyUsuario = () => {
         }
     }
 
-    const uploadFileToStorage = async (file: File, section: string, name: string): Promise<{ name: string; key: string }> => {
-        const contentType = file.type || 'application/octet-stream'
-
-        const signResponse = await fetch('/api/upload', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ section, fileName: name, contentType, size: file.size }),
-        })
-        const signed = await signResponse.json().catch(() => null) as { key?: string; uploadUrl?: string; error?: string } | null
-
-        if (!signResponse.ok || !signed?.key || !signed.uploadUrl) {
-            throw new Error(signed?.error ?? `No pudimos subir ${name}.`)
-        }
-
-        const uploadResponse = await fetch(signed.uploadUrl, {
-            method: 'PUT',
-            headers: { 'Content-Type': contentType },
-            body: file,
-        })
-
-        if (!uploadResponse.ok) {
-            throw new Error(`No pudimos subir ${name}.`)
-        }
-
-        return { name, key: signed.key }
-    }
-
-    const uploadFiles = async (files: File[], section: string): Promise<{ name: string; key: string }[]> => {
-        if (files.length === 0) return []
-
-        return Promise.all(
-            files.map((file, index) => {
-                const safeName = file.name && file.name.trim().length > 0
-                    ? file.name
-                    : `${section}-${index + 1}`
-
-                return uploadFileToStorage(file, section, safeName)
-            })
-        )
-    }
-
     const onSubmit = async (values: YaSoyUsuarioFormValues) => {
         setIsSubmitting(true)
         setFeedback(null)
@@ -207,16 +176,11 @@ const FormYaSoyUsuario = () => {
             ] as const
 
             setSubmitStatus('Subiendo archivos...')
-            const uploadResults = await Promise.all(
-                fileSections.map((section) =>
-                    uploadFiles(values[section] ?? [], section)
-                )
+            const uploadedFiles = await uploadCaseFiles(
+                Object.fromEntries(fileSections.map((section) => [section, values[section] ?? []])) as Record<(typeof fileSections)[number], File[]>,
+                setUploadProgress,
             )
-
-            const uploadedFiles: Record<string, { name: string; key: string }[]> = {}
-            fileSections.forEach((section, index) => {
-                uploadedFiles[section] = uploadResults[index]
-            })
+            setUploadProgress(null)
 
             const body = new FormData()
             Object.entries(values).forEach(([key, value]) => {
@@ -231,6 +195,8 @@ const FormYaSoyUsuario = () => {
             const response = await fetch('/api/ya-soy-usuario', {
                 method: 'POST',
                 body,
+            }).catch(() => {
+                throw new Error('Se cortó la conexión al enviar el formulario. Revisá tu internet y volvé a intentar.')
             })
 
             const payload = await response.json().catch(() => ({}))
@@ -245,6 +211,7 @@ const FormYaSoyUsuario = () => {
             const message = error instanceof Error ? error.message : 'No pudimos enviar el formulario.'
             setFeedback({ type: 'error', message })
         } finally {
+            setUploadProgress(null)
             setIsSubmitting(false)
         }
     }
@@ -949,6 +916,26 @@ planificar el tratamiento del paciente.</FormLabel>
                             <span className="h-3 w-3 rounded-full bg-blue-custom animate-[pulse-dot_1.4s_ease-in-out_0.4s_infinite]" />
                         </div>
                         <p className="text-sm text-gray-text">{submitStatus}</p>
+                        {uploadProgress && uploadProgress.totalBytes > 0 ? (
+                            <div className="w-full max-w-xs space-y-2" data-testid="upload-progress">
+                                <div
+                                    className="h-2 w-full overflow-hidden rounded-full bg-gray-200"
+                                    role="progressbar"
+                                    aria-valuemin={0}
+                                    aria-valuemax={100}
+                                    aria-valuenow={Math.floor((uploadProgress.loadedBytes / uploadProgress.totalBytes) * 100)}
+                                >
+                                    <div
+                                        className="h-full bg-blue-custom transition-[width] duration-300"
+                                        style={{ width: `${(uploadProgress.loadedBytes / uploadProgress.totalBytes) * 100}%` }}
+                                    />
+                                </div>
+                                <p className="text-center text-sm text-gray-text">
+                                    {Math.floor((uploadProgress.loadedBytes / uploadProgress.totalBytes) * 100)}% ({formatMegabytes(uploadProgress.loadedBytes)} de {formatMegabytes(uploadProgress.totalBytes)})
+                                </p>
+                                <p className="text-center text-xs text-gray-text">No cierres esta página hasta que termine.</p>
+                            </div>
+                        ) : null}
                     </DialogContent>
                 </Dialog>
             </form>
